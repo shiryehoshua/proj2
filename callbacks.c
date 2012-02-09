@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #ifdef __APPLE__
 #  include <OpenGL/gl3.h>
 #else
@@ -20,9 +23,56 @@ extern int contextDraw(context_t *ctx);
 #define RIGHT 286
 void callbackKeyboard(int key, int action)
 {
+  /* give AntTweakBar first pass at handling with key event */
+  if (TwEventKeyGLFW(key, action)) {
+    /* the event was handled by AntTweakBar; nothing more for us to do */
+    return;
+  }
+
+	FILE *file;
+	spotImage *shot;
+	int test, testMax=99999;
+	char fname[128]; /* long enough to hold filename */
+    
   if (GLFW_PRESS != action) {
     GLfloat v;
     switch (key) {
+      case 'D':
+        shot = spotImageNew();
+        /* copy image from render window; last argument controls whether
+           image is retreived with (SPOT_TRUE) or without (SPOT_FALSE) an
+           alpha channel */
+        if (spotImageScreenshot(shot, SPOT_TRUE)) {
+          //fprintf(stderr, "%s: trouble getting image:\n", me);
+          spotErrorPrint(); spotErrorClear();
+          break;
+        }
+        /* find unused filename */
+        for (test=0, file=NULL; test<=testMax; test++) {
+          /* feel free to change the filename format used here! */
+          sprintf(fname, "%05d.png", test);
+          if (!(file = fopen(fname, "rb"))) {
+            /* couldn't open fname => it didn't exist => we can use fname, done */
+            break;
+          }
+          /* else we *could* open it => already used => close it try again */
+          fclose(file);
+          file = NULL;
+        }
+        if (test > testMax) {
+          //fprintf(stderr, "%s: unable to find unused filename to write to!", me);
+          spotImageNix(shot);
+          break;
+        }
+        /* save image */
+        if (spotImageSavePNG(fname, shot)) {
+          //fprintf(stderr, "%s: trouble saving to %s:\n", me, fname);
+          spotImageNix(shot); spotErrorPrint(); spotErrorClear();
+          break;
+        }
+        spotImageNix(shot);
+      break;
+
       // Quit the application
       case 'Q': gctx->running=0; break;
 
@@ -112,6 +162,13 @@ void callbackKeyboard(int key, int action)
 #define HORIZONTAL 0
 void callbackMouseButton(int button, int action)
 {
+  /* give AntTweakBar first pass at handling mouse event */
+  if (TwEventMouseButtonGLFW(button, action)) {
+    /* AntTweakBar has handled event, nothing more for us to do,
+       not even recording buttonDown */
+    return;
+  }
+
   (void)(button);
   int xx, yy;
   float xf, yf;
@@ -223,12 +280,15 @@ void callbackMousePos(int xx, int yy)
     //       this produces better motion.
     gctx->lastX = xx;
     gctx->lastY = yy;
-  }
+  } else {
+    TwEventMousePosGLFW(xx, yy);
+	}
 }
 
 void callbackResize(int w, int h)
 {
   const char me[]="callbackResize";
+	char buff[128];
 
   // Recalculated w and h values (using camera aspect ratio and fov); for projection matrix
   GLfloat wf, hf; 
@@ -241,6 +301,8 @@ void callbackResize(int w, int h)
 
   /* Set Viewport to window dimensions */
   glViewport(0, 0, w, h);
+  /* let AntTweakBar know about new window dimensions */
+  TwWindowSize(w, h);
 
   gctx->winSizeX = w;
   gctx->winSizeY = h;
@@ -262,11 +324,25 @@ void callbackResize(int w, int h)
   //hf = 1
   updateProj(gctx->camera.proj, wf, hf, gctx->camera.near, gctx->camera.far, gctx->camera.ortho);
 
+  /* By default the tweak bar maintains its position relative to the
+     LEFT edge of the window, which we are using for camera control.
+     So, move the tweak bar to a new position, fixed relative to RIGHT
+     edge of the window. You can remove/modify this based on your
+     preferences. */
+  sprintf(buff, TBAR_NAME " position='%d %d' ",
+          gctx->winSizeX - gctx->tbarSizeX - gctx->tbarMargin,
+          gctx->tbarMargin);
+  TwDefine(buff);
+
   /* redraw now with new window size to permit feedback during resizing */
   if (contextDraw(gctx)) {
-    spotErrorAdd("%s: trouble drawing", me);
+    fprintf(stderr, "%s: trouble drawing during resize:\n", me);
     spotErrorPrint();
     spotErrorClear();
+    gctx->running = 0;
+  }
+  if (!TwDraw()) {
+    fprintf(stderr, "%s: AntTweakBar error: %s\n", me, TwGetLastError());
     gctx->running = 0;
   }
   glfwSwapBuffers();
@@ -349,8 +425,8 @@ void setScene(int sceneNum)
     scaleGeomZ(gctx->geom[1], 0.2);
 
     // set both to the same color
-    SPOT_V3_SET(gctx->geom[0]->color, 1.0f, 0.0f, 0.0f); // Red
-    SPOT_V3_SET(gctx->geom[1]->color, 1.0f, 0.0f, 0.0f); // Red
+    SPOT_V3_SET(gctx->geom[0]->objColor, 1.0f, 0.0f, 0.0f); // Red
+    SPOT_V3_SET(gctx->geom[1]->objColor, 1.0f, 0.0f, 0.0f); // Red
 
     // set to orthographic mode
     gctx->camera.ortho = 1;

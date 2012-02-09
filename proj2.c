@@ -20,95 +20,10 @@
 #undef __gl_h_
 
 #include <AntTweakBar.h>
+const TwGraphAPI TW_OPENGL_CORE = (TwGraphAPI)5; // WIP (note: OpenGL Core Profil requires OpenGL 3.2 or later)
 
-
-/*
-** The camera_t is a suggested storage place for all the parameters associated
-** with determining how you see the scene, which is used to determine one of
-** the transforms applied in the vertex shader.  Right now there are no helper
-** functions to initialize or compute with the camera_t; that is up to you.
-**
-*/
-typedef struct {
-  GLfloat from[3],    /* location (in world-space) of eyepoint */
-    at[3],            /* what point (in world-space) we are looking at */
-    up[3],            /* what is up direction for eye (this is not updated to
-                         the "true" up) */
-    aspect,           /* the ratio of horizontal to vertical size of the view
-                         window */
-    fov,              /* The angle, in degrees, vertically subtended by the
-                         near clipping plane */
-    near, far;        /* near and far clipping plane distances.  Whether you
-                         interpret these as relative to the eye "from" point
-                         (the convention in graphics) or relative to the 
-                         "at" point (arguably more convenient) is up to you */
-  int ortho,          /* (a boolean) no perspective projection: just
-                         orthographic */
-    upfixed;          /* up vector stays fixed during camera rotations */
-} camera_t;
-
-/*
-** A string to use as title bar name for the "tweak bar"
-*/
-#define TBAR_NAME "Project2-Params"
-
-/*
-** The uniloc_t is a possible place to store "locations" of shader
-** uniform variables, so they can be learned once and re-used once per
-** render.  Modify as you see fit! 
-*/
-typedef struct {
-  GLint modelMatrix;  /* same name as field in spotGeom */
-  GLint normalMatrix; /* same name as field in spotGeom */
-  GLint objColor;     /* same name as field in spotGeom */
-  GLint Ka;           /* same name as field in spotGeom */
-  GLint Kd;           /* same name as field in spotGeom */
-  GLint Ks;           /* same name as field in spotGeom */
-  GLint shexp;        /* same name as field in spotGeom */
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  GLint viewMatrix;   /* possible name of view matrix in vertex shader */
-  GLint projMatrix;   /* possible name of projection matrix in vertex shader */
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-  GLint lightDir;     /* same name as field in context_t */
-  GLint samplerA;     /* possible name of texture sampler in fragment shader */
-  GLint samplerB;     /* possible name of texture sampler in fragment shader */
-} uniloc_t;
-
-/*
-** The context_t is a suggested storage place for what might otherwise be
-** separate global variables (globals obscure the flow of information and are
-** hence bad style).  Modify as you see fit!
-**
-*/
-typedef struct {
-  const char *vertFname, /* file name of vertex shader */
-    *fragFname;          /* file name of fragment shader */
-  spotGeom **geom;       /* array of spotGeom's to render */
-  unsigned int geomNum;  /* length of geom */
-  spotImage **image;     /* array of texture images to use */
-  unsigned int imageNum; /* length of image */
-  GLfloat bgColor[3];  /* background color */
-  GLfloat lightDir[3];   /* direction pointing to light (at infinity) */
-  int running;           /* we exit when this is zero */
-  GLint program;         /* the linked shader program */
-  int winSizeX, winSizeY; /* size of rendering window */
-  int tbarSizeX,         /* initial width of tweak bar */
-    tbarSizeY,           /* initial height of tweak bar */
-    tbarMargin;          /* margin between tweak bar and window */
-
-  camera_t camera;       /* a camera */
-  uniloc_t uniloc;       /* store of uniform locations */
-  int lastX, lastY;      /* coordinates of last known mouse position */
-  int buttonDown,        /* mouse button is being held down */
-    shiftDown;           /* shift was down at time of mouse click */
-  TwBar *tbar;           /* pointer to the parameter "tweak bar" */
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  /* (any other information about the state of mouse or keyboard
-     input, geometry, camera, transforms, or anything else that may
-     need to be accessed from anywhere */
-  GLfloat vspNear, vspFar,  U[3], V[3], N[3];
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-} context_t;
+#include "types.h"
+#include "callbacks.h"
 
 /****
 ***** The GLFW callbacks (e.g. callbackResize) don't take additional
@@ -131,7 +46,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   
   ctx = (context_t *)calloc(1, sizeof(context_t));
   if (!ctx) {
-    spotErrorAdd("%s: couldn't alloc context?", me);
+//    spotErrorAdd("%s: couldn't alloc context?", me);
     return NULL;
   }
 
@@ -182,7 +97,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   if (2 == geomNum) {
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
-    SPOT_M4_SET(ctx->geom[1]->modelMatrix,
+    SPOT_M4_SET_2(ctx->geom[1]->modelMatrix,
                 2.0, 0.0, 0.0, 0.0,
                 0.0, 2.0, 0.0, 0.0,
                 0.0, 0.0, 2.0,-1.0,
@@ -355,12 +270,12 @@ int contextDraw(context_t *ctx) {
   glUniform1i(ctx->uniloc.samplerB, 1);
   */
 
-  SPOT_M4_SET(demoView,
+  SPOT_M4_SET_2(demoView,
               -0.4423201,      0.8968572,       0.0000000,     -0.0046070,
               -0.4998170,     -0.2465043,       0.8303122,      0.3545303,
               -0.7446715,     -0.3672638,      -0.5572984,      9.9955845,
               0.0000000,       0.0000000,       0.0000000,      1.0000000);
-  SPOT_M4_SET(demoProj,
+  SPOT_M4_SET_2(demoProj,
               4.8082800,       0.0000000,       0.0000000,       0.0000000,
               0.0000000,       6.1820741,       0.0000000,       0.0000000,
               0.0000000,       0.0000000,       3.0375593,     -27.0835247,
@@ -404,185 +319,6 @@ int contextDraw(context_t *ctx) {
   }
   /* else */
   return 0;
-}
-
-void callbackKeyboard(int key, int action) {
-  const char me[]="callbackKeyboard";
-
-  /* give AntTweakBar first pass at handling with key event */
-  if (TwEventKeyGLFW(key, action)) {
-    /* the event was handled by AntTweakBar; nothing more for us to do */
-    return;
-  }
-
-  if (action != GLFW_PRESS) {
-    /* only acting on key press, not release */
-    return;
-  }
-
-  if ('D' == key) {
-    FILE *file;
-    spotImage *shot;
-    int test, testMax=99999;
-    char fname[128]; /* long enough to hold filename */
-
-    shot = spotImageNew();
-    /* copy image from render window; last argument controls whether
-       image is retreived with (SPOT_TRUE) or without (SPOT_FALSE) an
-       alpha channel */
-    if (spotImageScreenshot(shot, SPOT_TRUE)) {
-      fprintf(stderr, "%s: trouble getting image:\n", me);
-      spotErrorPrint(); spotErrorClear();
-      return;
-    }
-    /* find unused filename */
-    for (test=0, file=NULL; test<=testMax; test++) {
-      /* feel free to change the filename format used here! */
-      sprintf(fname, "%05d.png", test);
-      if (!(file = fopen(fname, "rb"))) {
-        /* couldn't open fname => it didn't exist => we can use fname, done */
-        break;
-      }
-      /* else we *could* open it => already used => close it try again */
-      fclose(file);
-      file = NULL;
-    }
-    if (test > testMax) {
-      fprintf(stderr, "%s: unable to find unused filename to write to!", me);
-      spotImageNix(shot);
-      return;
-    }
-    /* save image */
-    if (spotImageSavePNG(fname, shot)) {
-      fprintf(stderr, "%s: trouble saving to %s:\n", me, fname);
-      spotImageNix(shot); spotErrorPrint(); spotErrorClear();
-      return;
-    }
-    spotImageNix(shot);
-    return;
-  }
-
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  /* (process keyboard input */
-  if ('Q' == key) {
-    gctx->running = 0;
-    return;
-  }
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-  return;
-}
-
-void callbackMousePos(int xx, int yy) {
-  /* const char me[]="callbackMousePos"; */
-
-  if (!gctx->buttonDown) {
-    /* nothing for us to do, but AntTweakBar might care about the event */
-    TwEventMousePosGLFW(xx, yy);
-    /* we return regardless of whether AntTweakBar handled it because
-       we only do things when the button is pressed */
-    return;
-  }
-  /* else, we know gctx->buttonDown is set, which only happens when we
-     (not AntTweakBar) handled the button press event, so there is no
-     reason to give TwEventMousePosGLFW another chance at handling it */
-
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-  gctx->lastX = xx;
-  gctx->lastY = yy;
-  return;
-}
-
-#define FIFTH 0.2
-void callbackMouseButton(int button, int action) {
-  /* const char me[]="callbackMouseButton"; */
-
-  /* give AntTweakBar first pass at handling mouse event */
-  if (TwEventMouseButtonGLFW(button, action)) {
-    /* AntTweakBar has handled event, nothing more for us to do,
-       not even recording buttonDown */
-    return;
-  }
-
-  if (GLFW_PRESS == action) {
-    int xx, yy;
-    float xf, yf;
-    gctx->buttonDown = 1;
-    if (GLFW_PRESS == glfwGetKey(GLFW_KEY_LSHIFT)
-        || GLFW_PRESS == glfwGetKey(GLFW_KEY_RSHIFT)) {
-      gctx->shiftDown = 1;
-    } else {
-      gctx->shiftDown = 0;
-    }
-    /* determine action according to position of button press */
-    glfwGetMousePos(&xx, &yy);
-    xf = (float)xx/gctx->winSizeX;
-    yf = (float)yy/gctx->winSizeY;
-    /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-    if (yf > 1 - FIFTH) {
-
-    } else if (xf < FIFTH) {
-
-    } else {
-
-    }
-    /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-    /* Save position to permit tracking of changes in position. */
-    gctx->lastX = xx;
-    gctx->lastY = yy;
-  } else {
-    /* The button has been released. */
-    gctx->buttonDown = 0;
-    gctx->shiftDown = 0;
-  }
-  return;
-}
-
-void callbackResize(int w, int h) {
-  const char me[]="callbackResize";
-  char buff[128];
-
-  if (h == 0) {
-    h = 1;
-  }
-  /* record new window dimensions */
-  gctx->winSizeX = w;
-  gctx->winSizeY = h;
-  /* Set OpenGL viewport to window dimensions */
-  glViewport(0, 0, w, h);
-  /* let AntTweakBar know about new window dimensions */
-  TwWindowSize(w, h);
-  
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  /* (deal with window resizing; note that the *vertical* FOV should
-     be maintained throughout a resize) */ 
-
-
-  /* By default the tweak bar maintains its position relative to the
-     LEFT edge of the window, which we are using for camera control.
-     So, move the tweak bar to a new position, fixed relative to RIGHT
-     edge of the window. You can remove/modify this based on your
-     preferences. */
-  sprintf(buff, TBAR_NAME " position='%d %d' ",
-          gctx->winSizeX - gctx->tbarSizeX - gctx->tbarMargin,
-          gctx->tbarMargin);
-  TwDefine(buff);
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-
-  /* redraw both the context and the tweak bar with new window size to
-     give visual feedback during resizing */
-  if (contextDraw(gctx)) {
-    fprintf(stderr, "%s: trouble drawing during resize:\n", me);
-    spotErrorPrint(); spotErrorClear();
-    gctx->running = 0;
-  }
-  if (!TwDraw()) {
-    fprintf(stderr, "%s: AntTweakBar error: %s\n", me, TwGetLastError());
-    gctx->running = 0;
-  }
-  glfwSwapBuffers();
-  return;
 }
 
 int createTweakBar(context_t *ctx) {

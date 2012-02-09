@@ -15,6 +15,12 @@ extern "C" {
 #  include <GL/gl3.h>
 #endif
 
+#include <AntTweakBar.h>
+/*
+** A string to use as title bar name for the "tweak bar"
+*/
+#define TBAR_NAME "Project2-Params"
+
 /*
 ** The camera_t is a suggested storage place for all the parameters associated
 ** with determining how you see the scene, which is used to determine one of
@@ -40,7 +46,6 @@ typedef struct {
       fixed;
   GLfloat uvn[4*4];
   GLfloat proj[4*4];
-  int fixed;
 
   GLfloat wf, hf;
 

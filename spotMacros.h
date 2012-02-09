@@ -166,6 +166,11 @@ extern "C" {
 
 
 
+#define SPOT_M3_NORM(m1, m) \
+  ((m1)[0] = (m)[0]/(m)[8], (m1)[3] = (m)[3]/(m)[8], (m)[6] = (m)[6]/(m)[8], \
+   (m1)[1] = (m)[1]/(m)[8], (m1)[4] = (m)[4]/(m)[8], (m)[7] = (m)[7]/(m)[8], \
+   (m1)[2] = (m)[2]/(m)[8], (m1)[5] = (m)[5]/(m)[8], (m)[8] = (m)[8]/(m)[8]) \
+
 
 /* v = (x,y,z,w) */
 #define SPOT_V4_SET(v, x, y, z, w)                \
@@ -179,10 +184,17 @@ extern "C" {
    (v2)[3] = (v1)[3])
 
 
+/* set entire matrix m1 with m2; m1, m2: 4x4 matrix; */
+#define SPOT_M4_SET(m1, m2)                     \
+  ((m1)[ 0] = (m2)[ 0], (m1)[ 4] = (m2)[ 4], (m1)[ 8] = (m2)[ 8], (m1)[12] = (m2)[12], \
+   (m1)[ 1] = (m2)[ 1], (m1)[ 5] = (m2)[ 5], (m1)[ 9] = (m2)[ 9], (m1)[13] = (m2)[13], \
+   (m1)[ 2] = (m2)[ 2], (m1)[ 6] = (m2)[ 6], (m1)[10] = (m2)[10], (m1)[14] = (m2)[14], \
+   (m1)[ 3] = (m2)[ 3], (m1)[ 7] = (m2)[ 7], (m1)[11] = (m2)[11], (m1)[15] = (m2)[15])
+
 
 /* sets all entries of 4x4 matrix M, with arguments ordered
    to help visually match the normal layout of matrix components */
-#define SPOT_M4_SET(M,                                 \
+#define SPOT_M4_SET_2(M,                                 \
                     m00, m04, m08, m12,                \
                     m01, m05, m09, m13,                \
                     m02, m06, m10, m14,                \
