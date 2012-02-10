@@ -20,10 +20,10 @@
 #undef __gl_h_
 
 #include <AntTweakBar.h>
-const TwGraphAPI TW_OPENGL_CORE = (TwGraphAPI)5; // WIP (note: OpenGL Core Profil requires OpenGL 3.2 or later)
 
-#include "types.h"
 #include "callbacks.h"
+#include "types.h"
+#include "matrixFunctions.h"
 
 /****
 ***** The GLFW callbacks (e.g. callbackResize) don't take additional
@@ -173,6 +173,39 @@ int contextGLInit(context_t *ctx) {
     }
   }
 
+
+  //Set to view mode (default)
+  ctx->viewMode = 1;
+  ctx->modelMode = 0;
+
+  //Model Initializations
+  SPOT_M4_IDENTITY(gctx->model.xyzw);
+  SPOT_M4_IDENTITY(gctx->model.custom);
+
+  //Camera Initializations
+  SPOT_M4_IDENTITY(gctx->camera.uvn);
+  SPOT_M4_IDENTITY(gctx->camera.proj);
+
+  gctx->camera.ortho = 1;
+  gctx->camera.fixed = 1;
+  gctx->camera.fov = 1.57079633; // 90 degrees
+  gctx->camera.near = -2;
+  gctx->camera.far = 2;
+  gctx->camera.up[0] = 0;
+  gctx->camera.up[1] = 1;
+  gctx->camera.up[2] = 0;
+  gctx->camera.from[0] = 0;
+  gctx->camera.from[1] = 0;
+  gctx->camera.from[2] = -1;
+  gctx->camera.at[0] = 0;
+  gctx->camera.at[1] = 0;
+  gctx->camera.at[2] = 0;
+
+  gctx->mouseFun.m = NULL;
+  gctx->mouseFun.f = identity;
+  gctx->mouseFun.offset = gctx->mouseFun.multiplier = gctx->mouseFun.i = 0;
+
+
   return 0;
 }
 
@@ -281,8 +314,13 @@ int contextDraw(context_t *ctx) {
               0.0000000,       0.0000000,       3.0375593,     -27.0835247,
               0.0000000,       0.0000000,       1.0000000,       0.0000000);
 
-  glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, demoView);
-  glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, demoProj);
+	norm_M4(gctx->camera.uvn);
+  glUniformMatrix4fv(glGetUniformLocation(ctx->program, "viewMatrix"), 1, GL_FALSE,
+      gctx->camera.uvn);
+  glUniformMatrix4fv(glGetUniformLocation(ctx->program, "projMatrix"), 1, GL_FALSE,
+      gctx->camera.proj);
+  //glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, demoView);
+  //glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, demoProj);
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   for (gi=0; gi<ctx->geomNum; gi++) {
     glUniformMatrix4fv(ctx->uniloc.modelMatrix, 

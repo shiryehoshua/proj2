@@ -16,6 +16,7 @@ extern context_t *gctx;
 extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
 
+#include <AntTweakBar.h>
 
 #define UP 283
 #define DOWN 284
