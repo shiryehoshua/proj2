@@ -97,11 +97,11 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   if (2 == geomNum) {
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
-    SPOT_M4_SET_2(ctx->geom[1]->modelMatrix,
-                2.0, 0.0, 0.0, 0.0,
-                0.0, 2.0, 0.0, 0.0,
-                0.0, 0.0, 2.0,-1.0,
-                0.0, 0.0, 0.0, 1);
+    //SPOT_M4_SET_2(ctx->geom[1]->modelMatrix,
+    //            2.0, 0.0, 0.0, 0.0,
+    //            0.0, 2.0, 0.0, 0.0,
+    //            0.0, 0.0, 2.0,-1.0,
+    //            0.0, 0.0, 0.0, 1);
   }
 
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
@@ -314,17 +314,20 @@ int contextDraw(context_t *ctx) {
               0.0000000,       0.0000000,       3.0375593,     -27.0835247,
               0.0000000,       0.0000000,       1.0000000,       0.0000000);
 
-	norm_M4(gctx->camera.uvn);
-  glUniformMatrix4fv(glGetUniformLocation(ctx->program, "viewMatrix"), 1, GL_FALSE,
-      gctx->camera.uvn);
-  glUniformMatrix4fv(glGetUniformLocation(ctx->program, "projMatrix"), 1, GL_FALSE,
-      gctx->camera.proj);
+  norm_M4(gctx->camera.uvn);
+  glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, gctx->camera.uvn);
+  glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, gctx->camera.proj);
   //glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, demoView);
   //glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, demoProj);
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   for (gi=0; gi<ctx->geomNum; gi++) {
+    norm_M4(gctx->geom[gi]->modelMatrix);
+
     glUniformMatrix4fv(ctx->uniloc.modelMatrix, 
                        1, GL_FALSE, ctx->geom[gi]->modelMatrix);
+
+    updateNormals(gctx->geom[gi]->normalMatrix, gctx->geom[gi]->normalMatrix);
+
     glUniformMatrix3fv(ctx->uniloc.normalMatrix,
                        1, GL_FALSE, ctx->geom[gi]->normalMatrix);
     glUniform3fv(ctx->uniloc.objColor, 1, ctx->geom[gi]->objColor);
@@ -504,6 +507,7 @@ int main(int argc, const char* argv[]) {
 
   /* Main loop */
   while (gctx->running) {
+    updateUVN(gctx->camera.uvn, gctx->camera.at, gctx->camera.from, gctx->camera.up);
     /* render */
     if (contextDraw(gctx)) {
       fprintf(stderr, "%s: trouble drawing:\n", me);

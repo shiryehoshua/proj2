@@ -30,10 +30,10 @@ void callbackKeyboard(int key, int action)
     return;
   }
 
-	FILE *file;
-	spotImage *shot;
-	int test, testMax=99999;
-	char fname[128]; /* long enough to hold filename */
+  FILE *file;
+  spotImage *shot;
+  int test, testMax=99999;
+  char fname[128]; /* long enough to hold filename */
     
   if (GLFW_PRESS != action) {
     GLfloat v;
@@ -207,7 +207,9 @@ void callbackMouseButton(int button, int action)
           gctx->mouseFun.m = gctx->geom[0]->modelMatrix;
           gctx->mouseFun.f = translate_model_N;
           gctx->mouseFun.multiplier = 4;
-          updateNormals(gctx->geom[0]->normalMatrix, gctx->geom[0]->modelMatrix);
+          int j; for (j=0; j<gctx->geomNum; j++) {
+            updateNormals(gctx->geom[j]->normalMatrix, gctx->geom[j]->modelMatrix);
+          }
         } else if (gctx->viewMode) {
           printf(" ... (move V) translates eye and look-at along N\n");
           gctx->mouseFun.m = gctx->camera.uvn; // Never accessed
@@ -283,13 +285,13 @@ void callbackMousePos(int xx, int yy)
     gctx->lastY = yy;
   } else {
     TwEventMousePosGLFW(xx, yy);
-	}
+  }
 }
 
 void callbackResize(int w, int h)
 {
   const char me[]="callbackResize";
-	char buff[128];
+  char buff[128];
 
   // Recalculated w and h values (using camera aspect ratio and fov); for projection matrix
   GLfloat wf, hf; 
