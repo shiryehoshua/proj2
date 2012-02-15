@@ -28,14 +28,16 @@ void main() {
   vec3 nrm = normalize(normalMatrix * vertNorm);
 
   // max(0, n dot l)
-  float ndotl = max(0, dot(nrm, lightDir));// < 0 ? 0 : dot(nrm, lightDir);
+  vec4 v = normalize(viewMatrix * vertPos);
+  vec3 view; view.x = v.x; view.y = v.y; view.z = v.z;
+  vec3 h = normalize(lightDir + view); 
+  float ndotl = max(0, dot(nrm, lightDir));
+  float ndoth = max(0, dot(nrm, h));
 
   vec3 diff, amb, spec;
-  diff.r = diff.g = diff.b = 0;
-  spec.r = spec.g = spec.b = 0;
-
   amb  = Ka * objColor;
-  diff = Kd * objColor * lightColor * dot(nrm, lightDir); 
+  diff = Kd * objColor * lightColor * ndotl; 
+  spec = Ks * lightColor * ndoth;
 
   // Set the color
   fragColor.rgb = amb + diff + spec;
