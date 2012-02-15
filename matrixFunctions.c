@@ -78,12 +78,18 @@ void rotate_1st_2nd_V3(GLfloat x[3], GLfloat *uvn, GLfloat *s, size_t i)
 void rotate_view(GLfloat v, int i)
 {
   GLfloat temp[3], w[3];
+
   // temp = from - at
   SPOT_V3_SUB(temp, gctx->camera.from, gctx->camera.at);
-  // rotate from - at around U
+
+  // rotate from - at around the proper axis
   copy_V3(w, gctx->camera.uvn, i);
   rotate_V3(temp, w, &v, 0);
   SPOT_V3_ADD(gctx->camera.from, temp, gctx->camera.at);
+
+  // rotate the light around the proper axis
+  rotate_V3(gctx->lightDir, w, &v, 0);
+
   if (!gctx->camera.fixed)
     rotate_V3(gctx->camera.up, w, &v, 0);
 }
