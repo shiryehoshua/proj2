@@ -97,6 +97,10 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   if (2 == geomNum) {
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
+    scaleGeom(ctx->geom[0], 0.25);
+    scaleGeom(ctx->geom[1], 0.25);
+    ctx->geom[0]->objColor[0]=1.0;ctx->geom[0]->objColor[1]=0.0;ctx->geom[0]->objColor[2]=0.0; 
+    ctx->geom[1]->objColor[0]=0.0;ctx->geom[1]->objColor[1]=1.0;ctx->geom[1]->objColor[2]=0.0; 
     //SPOT_M4_SET_2(ctx->geom[1]->modelMatrix,
     //            2.0, 0.0, 0.0, 0.0,
     //            0.0, 2.0, 0.0, 0.0,
@@ -148,6 +152,8 @@ int contextGLInit(context_t *ctx) {
   SET_UNILOC(objColor);
   SET_UNILOC(Ka);
   SET_UNILOC(Kd);
+    SET_UNILOC(Ks);
+    SET_UNILOC(shexp);
   SET_UNILOC(samplerA);
   SET_UNILOC(samplerB);
   
@@ -268,7 +274,6 @@ context_t *contextNix(context_t *ctx) {
 
 int contextDraw(context_t *ctx) {
   const char me[]="contextDraw";
-  GLfloat demoView[16], demoProj[16];
   unsigned int gi;
 
   /* re-assert which program is being used (AntTweakBar uses its own) */
@@ -303,22 +308,11 @@ int contextDraw(context_t *ctx) {
   glUniform1i(ctx->uniloc.samplerB, 1);
   */
 
-  SPOT_M4_SET_2(demoView,
-              -0.4423201,      0.8968572,       0.0000000,     -0.0046070,
-              -0.4998170,     -0.2465043,       0.8303122,      0.3545303,
-              -0.7446715,     -0.3672638,      -0.5572984,      9.9955845,
-              0.0000000,       0.0000000,       0.0000000,      1.0000000);
-  SPOT_M4_SET_2(demoProj,
-              4.8082800,       0.0000000,       0.0000000,       0.0000000,
-              0.0000000,       6.1820741,       0.0000000,       0.0000000,
-              0.0000000,       0.0000000,       3.0375593,     -27.0835247,
-              0.0000000,       0.0000000,       1.0000000,       0.0000000);
-
   norm_M4(gctx->camera.uvn);
+
   glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, gctx->camera.uvn);
   glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, gctx->camera.proj);
-  //glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, demoView);
-  //glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, demoProj);
+
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   for (gi=0; gi<ctx->geomNum; gi++) {
     norm_M4(gctx->geom[gi]->modelMatrix);
@@ -326,13 +320,15 @@ int contextDraw(context_t *ctx) {
     glUniformMatrix4fv(ctx->uniloc.modelMatrix, 
                        1, GL_FALSE, ctx->geom[gi]->modelMatrix);
 
-    updateNormals(gctx->geom[gi]->normalMatrix, gctx->geom[gi]->normalMatrix);
+//    updateNormals(gctx->geom[gi]->normalMatrix, gctx->geom[gi]->normalMatrix);
 
     glUniformMatrix3fv(ctx->uniloc.normalMatrix,
                        1, GL_FALSE, ctx->geom[gi]->normalMatrix);
     glUniform3fv(ctx->uniloc.objColor, 1, ctx->geom[gi]->objColor);
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
+      glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
+      glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
   }
   
@@ -394,12 +390,18 @@ int createTweakBar(context_t *ctx) {
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* Add definitions of the variables that we want to tweak */
 
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "Ka",
+  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Ka",
                              TW_TYPE_FLOAT, &(ctx->geom[0]->Ka),
-                             " label='Ka' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "Kd",
+                             " label='geom[0]->Ka' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Kd",
                              TW_TYPE_FLOAT, &(ctx->geom[0]->Kd),
-                             " label='Kd' min=0.0 max=1.0 step=0.005");
+                             " label='geom[0]->Kd' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Ks",
+                             TW_TYPE_FLOAT, &(ctx->geom[0]->Ks),
+                             " label='geom[0]->Ks' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->shexp",
+                             TW_TYPE_FLOAT, &(ctx->geom[0]->shexp),
+                             " label='geom[0]->shexp' min=0.0 max=1.0 step=0.005");
   if (!EE) EE |= !TwAddVarRW(ctx->tbar, "bgColor",
                              TW_TYPE_COLOR3F, &(ctx->bgColor),
                              " label='bkgr color' ");
