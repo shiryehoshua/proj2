@@ -226,6 +226,7 @@ void callbackMouseButton(int button, int action)
           gctx->mouseFun.f = scale_1D;
           gctx->mouseFun.offset = 1;
           gctx->mouseFun.multiplier = 0.25;
+          callbackResize(gctx->winSizeX, gctx->winSizeY);
         }
       } else {
         printf(" ... (mode V) shrinks or grows (far distance) - (near distance)\n");

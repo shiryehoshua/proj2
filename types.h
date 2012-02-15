@@ -81,6 +81,7 @@ typedef struct {
   GLint projMatrix;   /* possible name of projection matrix in vertex shader */
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   GLint lightDir;     /* same name as field in context_t */
+  GLint lightColor;   /* same name as field in context_t */
   GLint samplerA;     /* possible name of texture sampler in fragment shader */
   GLint samplerB;     /* possible name of texture sampler in fragment shader */
 } uniloc_t;
@@ -105,6 +106,7 @@ typedef struct {
   unsigned int imageNum;  /* length of image */
   GLfloat bgColor[3];     /* background color */
   GLfloat lightDir[3];    /* direction pointing to light (at infinity) */
+  GLfloat lightColor[3];  /* color of light */
   int running;            /* we exit when this is zero */
   GLint program;          /* the linked shader program */
   int winSizeX, winSizeY; /* size of rendering window */
@@ -123,12 +125,12 @@ typedef struct {
   int viewMode,           /* 1 when in view mode, 0 otherwise */
     modelMode,            /* 1 when in model mode, 0 otherwise */
     lightMode;            /* 1 when in light mode, 0 otherwise */
-  mouseFun_t mouseFun;
   TwBar *tbar;            /* pointer to the parameter "tweak bar" */
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* (any other information about the state of mouse or keyboard
      input, geometry, camera, transforms, or anything else that may
      need to be accessed from anywhere */
+  mouseFun_t mouseFun;
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   GLfloat vspNear, vspFar,  U[3], V[3], N[3];
 } context_t;

@@ -80,6 +80,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   ctx->imageNum = imageNum;
   SPOT_V3_SET(ctx->bgColor, 0.2f, 0.25f, 0.3f);
   SPOT_V3_SET(ctx->lightDir, 1.0f, 0.0f, 0.0f);
+  SPOT_V3_SET(ctx->lightColor, 1.0f, 1.0f, 1.0f);
   ctx->running = 1; /* non-zero == true */
   ctx->program = 0;
   ctx->winSizeX = 900;
@@ -145,6 +146,7 @@ int contextGLInit(context_t *ctx) {
 #define SET_UNILOC(V) ctx->uniloc.V = glGetUniformLocation(ctx->program, #V)
   
   SET_UNILOC(lightDir);
+  SET_UNILOC(lightColor);
   SET_UNILOC(modelMatrix);
   SET_UNILOC(normalMatrix);
   SET_UNILOC(viewMatrix);
@@ -193,7 +195,7 @@ int contextGLInit(context_t *ctx) {
   SPOT_M4_IDENTITY(gctx->camera.proj);
 
   gctx->camera.ortho = 1;
-  gctx->camera.fixed = 1;
+  gctx->camera.fixed = 0;
   gctx->camera.fov = 1.57079633; // 90 degrees
   gctx->camera.near = -2;
   gctx->camera.far = 2;
@@ -314,6 +316,7 @@ int contextDraw(context_t *ctx) {
   glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, gctx->camera.proj);
 
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
+  glUniform3fv(ctx->uniloc.lightColor, 1, ctx->lightColor);
   for (gi=0; gi<ctx->geomNum; gi++) {
     norm_M4(gctx->geom[gi]->modelMatrix);
 
