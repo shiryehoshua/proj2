@@ -2,6 +2,7 @@
 
 // Sample vertex shader for Project 2.  Hack away!
 
+uniform int gouraudMode;
 uniform mat4 modelMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 viewMatrix;
@@ -26,7 +27,7 @@ void main() {
   // transform vertices 
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
   
-  if (false) { // in Gouraud mode
+  if (gouraudMode != 0) { // in Gouraud mode
     // transform normals
     vec3 nrm = normalize(normalMatrix * vertNorm);
   
