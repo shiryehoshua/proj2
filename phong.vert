@@ -19,13 +19,14 @@ in vec3 vertRgb;
 in vec3 vertNorm;
 
 out vec4 fragColor;
+out vec3 vnrm;
 
 void main() {
 
-  if (true) { // in Gouraud mode
-    // transform vertices 
-    gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
+  // transform vertices 
+  gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
   
+  if (false) { // in Gouraud mode
     // transform normals
     vec3 nrm = normalize(normalMatrix * vertNorm);
   
@@ -42,7 +43,14 @@ void main() {
     // calculate color
     fragColor.rgb = amb + diff + spec;
     fragColor.a = 1.0;
+
+    vnrm = nrm;
   }
   else { // in Phong mode
+    // surface normal in view coords
+    vnrm = normalMatrix * vertNorm;
+
+    fragColor.rgb = objColor;
+    fragColor.a = 1.0;
   }
 }

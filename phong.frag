@@ -1,10 +1,10 @@
-#version 150 core
+#version 150 
 
 // Sample fragment shader for Project 2.  Hack away!
 
 uniform int gouraudMode;
-uniform vec3 lightColor;
 uniform vec3 lightDir;
+uniform vec3 lightColor;
 uniform vec3 objColor;
 uniform float Ka;
 uniform float Kd;
@@ -12,22 +12,24 @@ uniform float Ks;
 uniform float shexp;
 
 in vec4 fragColor;
+in vec3 vnrm;
 
 out vec4 color;
 
 void main() {
 
-  if (true) {
+  if (false) { // in Gouraud mode
     color = fragColor;
-    color.a = 1.0;
   }
   else { // in Phong mode
-    // ambient value stays the same
+    vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
+    vec3 amb = Ka * objColor;
 
-    // diffuse is calculated differently
-   // diff = Kd * objColor * max(0, dot(normalize(nrm), normalize(vlightDir)));
+    vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
+    float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
+    vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
 
-    // specular uses different reflection
-    //spec = Ks * lightColor * pow(ndotr, shexp);
+    color.rgb = diff + amb + spec;
+    color.a = 1.0;
   }
 }
