@@ -29,7 +29,7 @@ void main() {
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
 
   // set up texture coordinate
-  texCoord.xy = vertPos.xy;
+  texCoord.xy = (2 * modelMatrix * vertPos).xy;
 
   if (gouraudMode != 0) { // in Gouraud mode
     // transform normals
