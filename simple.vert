@@ -28,6 +28,6 @@ void main() {
   // is not Phong lighting, and may not be a good starting point for it.
   float dt = pow((dot(nrm, lightDir)+1.0)/2.0, 4);
   //fragColor.rgb = vertRgb * objColor.rgb * (Ka + Kd*dt);
-  fragColor.rgb = vertRgb * (Ka + Kd*dt);
+  fragColor.rgb = vertRgb;// * (Ka + Kd*dt);
   fragColor.a = 1.0;
 }

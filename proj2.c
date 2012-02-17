@@ -115,25 +115,32 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     spotImageLoadPNG(ctx->image[1], "textimg/bw.png");
     int i, v;
     for (i=0; i<geomNum; i++) {
-      for (v=0; v<ctx->geom[i]->vertNum*2; v+=2) {
-        GLfloat s=ctx->geom[i]->tex2[v],
-                t=ctx->geom[i]->tex2[v+1];
-        int sizeC=ctx->image[i]->sizeC,
-            maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
-            sizeX=ctx->image[i]->sizeX,
-            sizeY=ctx->image[i]->sizeY,
-            sizeP=ctx->image[i]->sizeP,
-            sizeOfPixel=sizeP*sizeC,
-            sizeOfRow=sizeX*sizeOfPixel,
-            img_x=s*sizeX*sizeOfPixel,
+      int sizeC=ctx->image[i]->sizeC,
+          maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
+          sizeX=ctx->image[i]->sizeX,
+          sizeY=ctx->image[i]->sizeY,
+          sizeP=ctx->image[i]->sizeP,
+          sizeOfPixel=sizeP*sizeC,
+          sizeOfRow=sizeX*sizeOfPixel;
+      GLfloat *data = sizeC==1 ? ctx->image[i]->data.uc : ctx->image[i]->data.us;
+      for (v=0; v<ctx->geom[i]->vertNum; v++) {
+        GLfloat s=ctx->geom[i]->tex2[2*v],
+                t=ctx->geom[i]->tex2[2*v+1];
+        int img_x=s*sizeX*sizeOfPixel,
             img_y=t*sizeY*sizeOfRow;
-        GLfloat r=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*0))/maxVal,
-                g=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*1))/maxVal,
-                b=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*2))/maxVal;
-        printf("v: %d\t\t(s,t): (%f,%f)\t\tR: %f\tG: %f\tB: %f\n", v, s, t, r, g, b);
-        ctx->geom[i]->rgb[v/2+0]=r;
-        ctx->geom[i]->rgb[v/2+1]=g;
-        ctx->geom[i]->rgb[v/2+2]=b;
+        printf("sizeC: %d\tmaxVal: %d\tsizeP: %d\n", sizeC, maxVal, sizeP);
+        printf("v: %d\t\t(s,t): (%f,%f)\t\t", v, s, t);
+        GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal,
+                g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal,
+                b=(float)(*(data+img_y+img_x+sizeC*2))/maxVal;
+        printf("R: %f\tG: %f\tB: %f\n", r, g, b);
+        ctx->geom[i]->rgb[v*3+0]=r;
+        ctx->geom[i]->rgb[v*3+1]=g;
+        ctx->geom[i]->rgb[v*3+2]=b;
+        // JK!
+//        ctx->geom[i]->rgb[v/2*3+0]=0;
+//        ctx->geom[i]->rgb[v/2*3+1]=0;
+//        ctx->geom[i]->rgb[v/2*3+2]=1;
       }
     }
   }
