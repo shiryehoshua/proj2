@@ -341,11 +341,11 @@ int contextDraw(context_t *ctx) {
      be sampled by which sampler.  See OpenGL SuperBible (5th edition)
      pg 279.  Also, http://tinyurl.com/7bvnej3 is amusing and
      informative */
-  /*
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, ctx->image[0]->textureId);
   glUniform1i(ctx->uniloc.samplerA, 0);
 
+  /*
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
