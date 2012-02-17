@@ -124,7 +124,8 @@ typedef struct {
     shiftDown;            /* shift was down at time of mouse click */
   int viewMode,           /* 1 when in view mode, 0 otherwise */
     modelMode,            /* 1 when in model mode, 0 otherwise */
-    lightMode;            /* 1 when in light mode, 0 otherwise */
+    lightMode,            /* 1 when in light mode, 0 otherwise */
+    gouraudMode;          /* 1 when in gouraud mode, 0 otherwise */
   TwBar *tbar;            /* pointer to the parameter "tweak bar" */
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* (any other information about the state of mouse or keyboard

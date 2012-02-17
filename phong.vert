@@ -21,30 +21,28 @@ in vec3 vertNorm;
 out vec4 fragColor;
 
 void main() {
-  // transform vertices 
-  gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
 
-  // transform normals
-  vec3 nrm = normalize(normalMatrix * vertNorm);
-
-  // max(0, n dot l)
-  vec4 v = normalize(viewMatrix * vertPos);
-  vec3 view; view.x = v.x; view.y = v.y; view.z = v.z;
-  vec3 h = normalize(lightDir + view); 
-  float ndotl = max(0, dot(nrm, lightDir));
-  float ndoth = max(0, dot(nrm, h));
-
-  vec3 diff, amb, spec;
-  amb  = Ka * objColor;
-  diff = Kd * objColor * lightColor * ndotl; 
-  spec = Ks * lightColor * ndoth;
-
-  // Set the color
-  fragColor.rgb = amb + diff + spec;
-
-  // Surface brightest when normal and lightDir are aligned, but this
-  // is not Phong lighting, and may not be a good starting point for it.
-  float dt = pow((dot(nrm, lightDir)+1.0)/2.0, 4);
-  //fragColor.rgb = vertRgb * objColor.rgb * (Ka + Kd*dt);
-  fragColor.a = 1.0;
+  if (true) { // in Gouraud mode
+    // transform vertices 
+    gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
+  
+    // transform normals
+    vec3 nrm = normalize(normalMatrix * vertNorm);
+  
+    // pre-calculations to simplify
+    float ndotl = max(0, dot(nrm, lightDir));
+    vec3 reflection = normalize(reflect(-lightDir, nrm));
+    float ndotr = max(0, dot(nrm, reflection));
+  
+    // calculate diffuse, ambient and specular components
+    vec3 amb  = Ka * objColor;
+    vec3 diff = Kd * objColor * lightColor * ndotl;
+    vec3 spec = Ks * lightColor * pow(ndotr, shexp);
+  
+    // calculate color
+    fragColor.rgb = amb + diff + spec;
+    fragColor.a = 1.0;
+  }
+  else { // in Phong mode
+  }
 }
