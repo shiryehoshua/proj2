@@ -18,7 +18,7 @@ out vec4 color;
 
 void main() {
 
-  if (false) { // in Gouraud mode
+  if (gouraudMode != 0) { // in Gouraud mode
     color = fragColor;
   }
   else { // in Phong mode

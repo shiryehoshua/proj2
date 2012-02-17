@@ -183,8 +183,9 @@ int contextGLInit(context_t *ctx) {
   SET_UNILOC(objColor);
   SET_UNILOC(Ka);
   SET_UNILOC(Kd);
-    SET_UNILOC(Ks);
-    SET_UNILOC(shexp);
+  SET_UNILOC(Ks);
+  SET_UNILOC(gouraudMode);
+  SET_UNILOC(shexp);
   SET_UNILOC(samplerA);
   SET_UNILOC(samplerB);
   
@@ -346,6 +347,7 @@ int contextDraw(context_t *ctx) {
 
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   glUniform3fv(ctx->uniloc.lightColor, 1, ctx->lightColor);
+  glUniform1i(ctx->uniloc.gouraudMode, ctx->gouraudMode);
   for (gi=0; gi<ctx->geomNum; gi++) {
     norm_M4(gctx->geom[gi]->modelMatrix);
 
@@ -359,8 +361,8 @@ int contextDraw(context_t *ctx) {
     glUniform3fv(ctx->uniloc.objColor, 1, ctx->geom[gi]->objColor);
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
-      glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
-      glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
+    glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
+    glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
   }
   
@@ -439,7 +441,7 @@ int createTweakBar(context_t *ctx) {
                              " label='bkgr color' ");
   if (!EE) EE |= !TwAddVarRW(ctx->tbar, "gouraudMode",
                              TW_TYPE_INT32, &(ctx->gouraudMode),
-                             " label='gouraud mode' ");
+                             " label='gouraud mode' min=0.0 max=1.0 step=1 ");
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
 
   /* see also:
