@@ -8,6 +8,9 @@
 
 #include "spot.h"
 
+// For UCHAR_MAX and friends...
+#include <limits.h>
+
 /*
 ** Prior to including glfw.h: sneakily #define the "__gl_h_" include
 ** guard of OpenGL/gl.h so that the "#include <OpenGL/gl.h>" in glfw.h
@@ -107,8 +110,33 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     //            0.0, 2.0, 0.0, 0.0,
     //            0.0, 0.0, 2.0,-1.0,
     //            0.0, 0.0, 0.0, 1);
+    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
+    //spotImageLoadPNG(ctx->image[1], "textimg/hemisph-hght16.png");
+    spotImageLoadPNG(ctx->image[1], "textimg/bw.png");
+    int i, v;
+    for (i=0; i<geomNum; i++) {
+      for (v=0; v<ctx->geom[i]->vertNum*2; v+=2) {
+        size_t sizeC = ctx->image[i]->sizeC;
+        int maxVal = sizeC==1 ? UCHAR_MAX : USHRT_MAX;
+        GLfloat s=ctx->geom[i]->tex2[v],
+                t=ctx->geom[i]->tex2[v+1];
+        int sizeX=ctx->image[i]->sizeX,
+            sizeY=ctx->image[i]->sizeY,
+            sizeP=ctx->image[i]->sizeP,
+            img_x=s*sizeX,
+            img_y=t*sizeY;
+        size_t sizeOfPixel=sizeP*sizeC,
+               sizeOfRow=sizeX*sizeOfPixel;
+        GLfloat r=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+0*sizeC))/maxVal,
+                g=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+1*sizeC))/maxVal,
+                b=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+2*sizeC))/maxVal;
+        printf("v: %d\t\t(s,t): (%f,%f)\t\tR: %f\tG: %f\tB: %f\n", v, s, t, r, g, b);
+        ctx->geom[i]->rgb[v/2+0]=r;
+        ctx->geom[i]->rgb[v/2+1]=g;
+        ctx->geom[i]->rgb[v/2+2]=b;
+      }
+    }
   }
-
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   return ctx;
 }
@@ -132,6 +160,7 @@ int contextGLInit(context_t *ctx) {
                                 "vertPos", spotVertAttrIndx_xyz,
                                 "vertNorm", spotVertAttrIndx_norm,
                                 "vertTex2", spotVertAttrIndx_tex2,
+                                "vertRgb", spotVertAttrIndx_rgb,
                                 "vertTang", spotVertAttrIndx_tang,
                                 /* input name, attribute index pairs
                                    MUST BE TERMINATED with NULL */
@@ -438,7 +467,7 @@ int main(int argc, const char* argv[]) {
   }
 
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  if (!(gctx = contextNew(2, 0))) {
+  if (!(gctx = contextNew(2, 2))) { // 2 Images!
     fprintf(stderr, "%s: context set-up problem:\n", me);
     spotErrorPrint(); spotErrorClear();
     exit(1);
