@@ -408,6 +408,9 @@ int createTweakBar(context_t *ctx) {
   if (!EE) EE |= !TwAddVarRW(ctx->tbar, "bgColor",
                              TW_TYPE_COLOR3F, &(ctx->bgColor),
                              " label='bkgr color' ");
+  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "gouraudMode",
+                             TW_TYPE_INT32, &(ctx->gouraudMode),
+                             " label='gouraud mode' ");
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
 
   /* see also:
