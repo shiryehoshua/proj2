@@ -110,26 +110,26 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     //            0.0, 2.0, 0.0, 0.0,
     //            0.0, 0.0, 2.0,-1.0,
     //            0.0, 0.0, 0.0, 1);
-    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
-    //spotImageLoadPNG(ctx->image[1], "textimg/hemisph-hght16.png");
+    //spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
+    spotImageLoadPNG(ctx->image[0], "textimg/bw.png");
     spotImageLoadPNG(ctx->image[1], "textimg/bw.png");
     int i, v;
     for (i=0; i<geomNum; i++) {
       for (v=0; v<ctx->geom[i]->vertNum*2; v+=2) {
-        size_t sizeC = ctx->image[i]->sizeC;
-        int maxVal = sizeC==1 ? UCHAR_MAX : USHRT_MAX;
         GLfloat s=ctx->geom[i]->tex2[v],
                 t=ctx->geom[i]->tex2[v+1];
-        int sizeX=ctx->image[i]->sizeX,
+        int sizeC=ctx->image[i]->sizeC,
+            maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
+            sizeX=ctx->image[i]->sizeX,
             sizeY=ctx->image[i]->sizeY,
             sizeP=ctx->image[i]->sizeP,
-            img_x=s*sizeX,
-            img_y=t*sizeY;
-        size_t sizeOfPixel=sizeP*sizeC,
-               sizeOfRow=sizeX*sizeOfPixel;
-        GLfloat r=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+0*sizeC))/maxVal,
-                g=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+1*sizeC))/maxVal,
-                b=(float)(*(ctx->image[i]->data.uc+img_y*sizeOfRow+img_x*sizeOfPixel+2*sizeC))/maxVal;
+            sizeOfPixel=sizeP*sizeC,
+            sizeOfRow=sizeX*sizeOfPixel,
+            img_x=s*sizeX*sizeOfPixel,
+            img_y=t*sizeY*sizeOfRow;
+        GLfloat r=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*0))/maxVal,
+                g=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*1))/maxVal,
+                b=(float)(*(ctx->image[i]->data.uc+img_y+img_x+sizeC*2))/maxVal;
         printf("v: %d\t\t(s,t): (%f,%f)\t\tR: %f\tG: %f\tB: %f\n", v, s, t, r, g, b);
         ctx->geom[i]->rgb[v/2+0]=r;
         ctx->geom[i]->rgb[v/2+1]=g;
