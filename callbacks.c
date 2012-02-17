@@ -15,6 +15,7 @@
 extern context_t *gctx;
 extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
+extern void perVertexTexturing(int on);
 
 #include <AntTweakBar.h>
 
@@ -149,6 +150,10 @@ void callbackKeyboard(int key, int action)
       case '3':
         fprintf(stderr, "Setting scene 3: Demostrating correct surface normals\n"); 
         setScene(3);
+        break;
+
+      case 'T':
+        perVertexTexturing(1);
         break;
 
       // Print keycode for debugging purposes

@@ -40,6 +40,43 @@ context_t *gctx = NULL;
 ****/
 
 
+void perVertexTexturing(int on) {
+  int i, v;
+  if (on) {
+    for (i=0; i<gctx->geomNum; i++) {
+      int sizeC=gctx->image[i]->sizeC,
+          maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
+          sizeX=gctx->image[i]->sizeX,
+          sizeY=gctx->image[i]->sizeY,
+          sizeP=gctx->image[i]->sizeP,
+          sizeOfPixel=sizeP*sizeC,
+          sizeOfRow=sizeX*sizeOfPixel;
+      unsigned char *data = sizeC==1 ? gctx->image[i]->data.uc : (unsigned char*) gctx->image[i]->data.us;
+      for (v=0; v<gctx->geom[i]->vertNum; v++) {
+        GLfloat s=gctx->geom[i]->tex2[2*v],
+                t=gctx->geom[i]->tex2[2*v+1];
+        int x=s*(sizeX-1),
+            y=t*(sizeY-1),
+            img_x=x*sizeOfPixel,
+            img_y=y*sizeOfRow;
+        //printf("v: %d\t(s,t): (%f,%f)\n\tx: %d\ty: %d\n\t", v, s, t, x, y);
+        GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal,
+                g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal,
+                b=(float)(*(data+img_y+img_x+sizeC*2))/maxVal;
+        //printf("R: %f\tG: %f\tB: %f\n", r, g, b);
+        //printf("\tsizeC: %d\tmaxVal: %d\tsizeP: %d\tsizeX: %d\tsizeY: %d\n", sizeC, maxVal, sizeP, sizeX, sizeY);
+        gctx->geom[i]->rgb[v*3+0]=r;
+        gctx->geom[i]->rgb[v*3+1]=g;
+        gctx->geom[i]->rgb[v*3+2]=b;
+      }
+    }
+  } else {
+    for (i=0; i<gctx->geomNum; i++)
+      for (v=0; v<gctx->geom[i]->vertNum; v++)
+        gctx->geom[i]->rgb[v*3+0]=gctx->geom[i]->rgb[v*3+1]=gctx->geom[i]->rgb[v*3+2]=1;
+  }
+}
+
 /* Creates a context around geomNum spotGeom's and
    imageNum spotImage's */
 context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
@@ -103,51 +140,8 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     ctx->geom[1] = spotGeomNewSquare();
     scaleGeom(ctx->geom[0], 0.25);
     scaleGeom(ctx->geom[1], 0.25);
-    ctx->geom[0]->objColor[0]=1.0;ctx->geom[0]->objColor[1]=0.0;ctx->geom[0]->objColor[2]=0.0; 
-    ctx->geom[1]->objColor[0]=0.0;ctx->geom[1]->objColor[1]=1.0;ctx->geom[1]->objColor[2]=0.0; 
-    //SPOT_M4_SET_2(ctx->geom[1]->modelMatrix,
-    //            2.0, 0.0, 0.0, 0.0,
-    //            0.0, 2.0, 0.0, 0.0,
-    //            0.0, 0.0, 2.0,-1.0,
-    //            0.0, 0.0, 0.0, 1);
     spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
-    //spotImageLoadPNG(ctx->image[0], "textimg/bw.png");
     spotImageLoadPNG(ctx->image[1], "textimg/bw.png");
-    int i, v;
-    for (i=0; i<geomNum; i++) {
-      int sizeC=ctx->image[i]->sizeC,
-          maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
-          sizeX=ctx->image[i]->sizeX,
-          sizeY=ctx->image[i]->sizeY,
-          sizeP=ctx->image[i]->sizeP,
-          sizeOfPixel=sizeP*sizeC,
-          sizeOfRow=sizeX*sizeOfPixel;
-      unsigned char *data = sizeC==1 ? ctx->image[i]->data.uc : (unsigned char*) ctx->image[i]->data.us;
-      for (v=0; v<ctx->geom[i]->vertNum; v++) {
-        GLfloat s=ctx->geom[i]->tex2[2*v],
-                t=ctx->geom[i]->tex2[2*v+1];
-        int x=s*(sizeX-1),
-            y=t*(sizeY-1),
-            img_x=x*sizeOfPixel,
-            img_y=y*sizeOfRow;
-        printf("v: %d\t(s,t): (%f,%f)\n\tx: %d\ty: %d\n\t", v, s, t, x, y);
-        //GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal,
-        //        g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal,
-        //        b=(float)(*(data+img_y+img_x+sizeC*2))/maxVal;
-        GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal,
-                g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal,
-                b=(float)(*(data+img_y+img_x+sizeC*2))/maxVal;
-        printf("R: %f\tG: %f\tB: %f\n", r, g, b);
-        printf("\tsizeC: %d\tmaxVal: %d\tsizeP: %d\tsizeX: %d\tsizeY: %d\n", sizeC, maxVal, sizeP, sizeX, sizeY);
-        ctx->geom[i]->rgb[v*3+0]=r;
-        ctx->geom[i]->rgb[v*3+1]=g;
-        ctx->geom[i]->rgb[v*3+2]=b;
-        // JK!
-//        ctx->geom[i]->rgb[v/2*3+0]=0;
-//        ctx->geom[i]->rgb[v/2*3+1]=0;
-//        ctx->geom[i]->rgb[v/2*3+2]=1;
-      }
-    }
   }
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   return ctx;
