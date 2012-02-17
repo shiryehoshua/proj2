@@ -1,0 +1,34 @@
+
+##
+## demo Makefile for Project 1
+##
+
+# Compiler settings
+CC     ?= cc
+
+GLFW_DIR_MACLAB = /opt/gfx
+IS_MACLAB = $(wildcard $(GLFW_DIR_MACLAB))
+
+ifeq ($(strip $(IS_MACLAB)), $(GLFW_DIR_MACLAB)) 
+CFLAGS ?= -Wall -O2 -g -I/opt/gfx/include
+LFLAGS = -L/opt/gfx/lib -lglfw -framework Cocoa -framework OpenGL
+else 
+CFLAGS ?= -Wall -O2 -g -I/usr/local/include/ `pkg-config --cflags libpng`
+LFLAGS = -L/usr/local/lib -lglfw -framework Cocoa -framework OpenGL `pkg-config --libs libpng`
+endif 
+
+OBJS = proj2.o spotGeomShapes.o spotGeomMethods.o spotImage.o spotUtils.o matrixFunctions.o callbacks.o
+
+all: proj2 $(OBJS)
+
+%.o: %.c spot.h spotMacros.h matrixFunctions.h callbacks.h types.h
+	$(CC) $(CFLAGS) -c -o $@ $< 
+
+proj2: $(OBJS) spot.h spotMacros.h matrixFunctions.h types.h callbacks.h
+	$(CC) $(OBJS) $(LFLAGS) /usr/local/lib/libAntTweakBar.dylib -o proj2
+
+clean:
+	rm -rf proj2 proj2.dSYM $(OBJS)
+
+run: proj2
+	./proj2 simple.{vert,frag}
