@@ -40,9 +40,9 @@ context_t *gctx = NULL;
 ****/
 
 
-void perVertexTexturing(int on) {
+void perVertexTexturing() {
   int i, v;
-  if (on) {
+  if (gctx->perVertexTexturingMode) {
     for (i=0; i<gctx->geomNum; i++) {
       int sizeC=gctx->image[i]->sizeC,
           maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
@@ -69,11 +69,16 @@ void perVertexTexturing(int on) {
         gctx->geom[i]->rgb[v*3+1]=g;
         gctx->geom[i]->rgb[v*3+2]=b;
       }
+      glBindBuffer(GL_ARRAY_BUFFER, gctx->geom[i]->rgbBuffId);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb, GL_STATIC_DRAW);
     }
   } else {
-    for (i=0; i<gctx->geomNum; i++)
+    for (i=0; i<gctx->geomNum; i++) {
       for (v=0; v<gctx->geom[i]->vertNum; v++)
         gctx->geom[i]->rgb[v*3+0]=gctx->geom[i]->rgb[v*3+1]=gctx->geom[i]->rgb[v*3+2]=1;
+      glBindBuffer(GL_ARRAY_BUFFER, gctx->geom[i]->rgbBuffId);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb, GL_STATIC_DRAW);
+    }
   }
 }
 

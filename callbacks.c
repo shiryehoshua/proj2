@@ -15,7 +15,7 @@
 extern context_t *gctx;
 extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
-extern void perVertexTexturing(int on);
+extern void perVertexTexturing();
 
 #include <AntTweakBar.h>
 
@@ -78,7 +78,8 @@ void callbackKeyboard(int key, int action)
       // Quit the application
       case 'Q': gctx->running=0; break;
 
-      case 'U': gctx->camera.fixed ^= 1;
+      case 'U':
+        gctx->camera.fixed ^= 1;
         fprintf(stderr, gctx->camera.fixed ? "Up vector fixed\n" : "Up vector free\n");
         break;
 
@@ -153,7 +154,9 @@ void callbackKeyboard(int key, int action)
         break;
 
       case 'T':
-        perVertexTexturing(1);
+        gctx->perVertexTexturingMode ^= 1;
+        fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
+        perVertexTexturing();
         break;
 
       // Print keycode for debugging purposes
