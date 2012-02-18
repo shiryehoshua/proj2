@@ -37,6 +37,11 @@ TwEnumVal twBumpMappingModesEV[]={{Disabled, "Disabled"},
                                   {NearestWithMipmap, "NearestWithMipmap"},
                                   {LinearWithMipmap, "LinearWithMipmap"}};
 
+// NOTE: we'd prefer to only draw one shape at a time, while keeping a sphere and
+//       square in memory. This variable gets referenced in contextDraw and does just
+//       that...
+int sceneGeomOffset=0;
+
 // NOTE: the following supports per-vertex texturing. We set the RGB values at each vertex, and
 //       our shaders linearly interpolate the values, giving it a (sick) low-res look
 int perVertexTexturing() {
@@ -255,8 +260,15 @@ int contextGLInit(context_t *ctx) {
       spotErrorAdd("%s: couldn't create shader program", me);
       return 1;
     } else {
-      // printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
+      printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
     }
+  }
+
+  // NOTE: the following is equivalent to hitting '1' on the keyboard; i.e. default
+  //       scene
+  if (ctx->vertFname==NULL) {
+    gctx->program=programIds[ID_PHONG];
+    gctx->gouraudMode=1;
   }
 
   // NOTE: this sets the uniform locations for the _invoked_ shader
@@ -286,7 +298,7 @@ int contextGLInit(context_t *ctx) {
   gctx->viewMode = 1;
   gctx->modelMode = 0;
   gctx->lightMode = 0;
-  gctx->gouraudMode = 0;
+  gctx->gouraudMode = 1;
   gctx->seamFix = 0;
   gctx->perVertexTexturingMode=1; // start in perVertexTexturingMode
   perVertexTexturing();
@@ -417,7 +429,7 @@ int contextDraw(context_t *ctx) {
   glUniform1i(ctx->uniloc.seamFix, ctx->seamFix);
 
   // NOTE: update our geom-specific unilocs
-  for (gi=0; gi<ctx->geomNum; gi++) {
+  for (gi=sceneGeomOffset; gi<ctx->geomNum-1+sceneGeomOffset; gi++) {
     // NOTE: we normalize the model matrix; while we may not need to, it is cheap to do so
     norm_M4(gctx->geom[gi]->modelMatrix);
     glUniformMatrix4fv(ctx->uniloc.modelMatrix, 1, GL_FALSE, ctx->geom[gi]->modelMatrix);
@@ -429,7 +441,7 @@ int contextDraw(context_t *ctx) {
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
     glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
-    glUniform1i(ctx->uniloc.gi, gi);
+    glUniform1i(ctx->uniloc.gi, gi-sceneGeomOffset);
     glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
   }
@@ -459,7 +471,7 @@ int contextDraw(context_t *ctx) {
 // NOTE: we use a callback here, since toggling perVertexTexturing requires the loading
 //       of different shaders (and thus updating unilocs)
 static void TW_CALL setPerVertexTexturingCallback(const void *value, void *clientData) {
-  gctx->perVertexTexturingMode ^= 1;
+  gctx->perVertexTexturingMode = *((const int *) value);
   fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
   if (perVertexTexturing()) {
     printf("\tLoading shader 'simple' with id=%d\n", programIds[ID_SIMPLE]);
@@ -489,7 +501,7 @@ static void TW_CALL setBumpMappingCallback(const void *value, void *clientData) 
       printf("\tLoading shader 'parallax' with id=%d\n", programIds[ID_PARALLAX]);
       gctx->program=programIds[ID_PARALLAX];
       break;
-    default:
+    default: // Disabled
       printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
       gctx->program=programIds[ID_TEXTURE];
   }
@@ -529,27 +541,27 @@ static void TW_CALL getFilteringCallback(void *value, void *clientData) {
 int updateTweakBarVars(int scene) {
   int EE=0;
   if (!EE) EE |= !TwRemoveAllVars(gctx->tbar);
-  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Ka",
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "Ka",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->Ka),
-                             " label='geom[0]->Ka' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Kd",
+                             " label='Ka' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "Kd",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->Kd),
-                             " label='geom[0]->Kd' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Ks",
+                             " label='Kd' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "Ks",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->Ks),
-                             " label='geom[0]->Ks' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->shexp",
+                             " label='Ks' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "shexp",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->shexp),
-                             " label='geom[0]->shexp' min=0.0 max=1.0 step=0.005");
+                             " label='shexp' min=0.0 max=1.0 step=0.005");
   if (!EE) EE |= !TwAddVarRW(gctx->tbar, "bgColor",
                              TW_TYPE_COLOR3F, &(gctx->bgColor),
                              " label='bkgr color' ");
   switch (scene) {
     case 1:
       if (!EE) EE |= !TwAddVarRW(
-           gctx->tbar, "gouraudMode",
+           gctx->tbar, "shading",
            TW_TYPE_BOOL8, &(gctx->gouraudMode),
-           " label='gouraud mode' true=Enabled false=Disabled ");
+           " label='shading' true=Gouraud false=Phong ");
       break;
     case 2:
       if (!EE) EE |= !TwAddVarCB(
@@ -708,7 +720,9 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-  if (createTweakBar(gctx, 0)) {
+  // NOTE: when we create the tweak bar, either load in scene 1 or default, depending
+  //       on whether we were passing a pair of shaders
+  if (createTweakBar(gctx, (gctx->vertFname==NULL?1:0))) {
     fprintf(stderr, "%s: AntTweakBar problem:\n", me);
     spotErrorPrint(); spotErrorClear();
     TwTerminate();

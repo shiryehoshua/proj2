@@ -27,40 +27,26 @@ void main() {
 
   vec4 c;
   vec2 tc;
-  if (seamFix!=0) { // without seam
+  // seamless
+  if (seamFix!=0) { 
     // recover theta from the vertex shader
     // atan(sin(theta)/cos(theta))
     tc.x = -0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
     tc.y = texCoord.y;
-  }
-  else {
+  } else {
     tc = texCoord.xy;
   }
 
-  switch (gi)
-  {
-    case 0:
-      c = texture(samplerA, tc);
-      break;
-    case 1:
-      c = texture(samplerB, tc);
-      break;
-    default:
-      c.rgb = objColor;
-  }
+  c = texture(samplerA, tc);
 
-  if (gouraudMode != 0) { // in Gouraud mode
-    color = fragColor;
-  }
-  else { // in Phong mode
-    vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
-    vec3 amb = Ka * c.rgb;
+  // Phong
+  vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
+  vec3 amb = Ka * c.rgb;
 
-    vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
-    float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
-    vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
+  vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
+  float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
+  vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
 
-    color.rgb = diff + amb + spec;
-    color.a = 1.0;
-  }
+  color.rgb = diff + amb + spec;
+  color.a = 1.0;
 }
