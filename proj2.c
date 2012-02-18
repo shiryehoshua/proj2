@@ -1,3 +1,8 @@
+// Project 2: by Mark (andrus) and Shir (shiryehoshua)
+//
+// Please see Mark's dir for source (andrus)
+//
+//
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

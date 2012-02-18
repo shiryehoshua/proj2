@@ -28,8 +28,8 @@ void main() {
 
   // calculate new normal
   vec3 n;
-  n.x = vnrm.x + b.x;
-  n.y = vnrm.y + b.y;
+  n.x = vnrm.x + b.x*2;
+  n.y = vnrm.y + b.y*2;
   n.z = vnrm.z;
 
   vec3 diff = Kd * max(0.0, dot(n, lightDir)) * a.rgb;
