@@ -180,6 +180,7 @@ void setUnilocs() {
       SET_UNILOC(shexp);
       SET_UNILOC(samplerA);
       SET_UNILOC(samplerB);
+      SET_UNILOC(samplerC);
 #undef SET_UNILOC;
 }
 
@@ -440,7 +441,6 @@ int contextDraw(context_t *ctx) {
 }
 
 static void TW_CALL setPerVertexTexturingCallback(const void *value, void *clientData) {
-  gctx->perVertexTexturingMode = *((const int *) value);
   gctx->perVertexTexturingMode ^= 1;
   fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
   if (perVertexTexturing()) {
@@ -454,6 +454,7 @@ static void TW_CALL setPerVertexTexturingCallback(const void *value, void *clien
 }
 
 static void TW_CALL getPerVertexTexturingCallback(void *value, void *clientData) {
+  *((int *) value) = gctx->perVertexTexturingMode;
 }
 
 // NOTE: here are our tweak bar definitions
@@ -481,15 +482,15 @@ int updateTweakBarVars(int EE, int scene) {
                                  " label='gouraud mode' true=Enabled false=Disabled ");
       break;
     case 2:
-      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
-                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
-                                 " label='gouraud mode' true=Enabled false=Disabled ");
-      break;
-    case 3:
       if (!EE) EE |= !TwAddVarCB(gctx->tbar, "perVertexTexturing",
                                  TW_TYPE_BOOL8, setPerVertexTexturingCallback,
                                  getPerVertexTexturingCallback, &(gctx->perVertexTexturingMode),
                                  " label='per-vertex texturing' true=Enabled false=Disabled ");
+      break;
+    case 3:
+      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
+                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
+                                 " label='gouraud mode' true=Enabled false=Disabled ");
       break;
     default:
       break;
