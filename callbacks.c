@@ -164,6 +164,8 @@ void callbackKeyboard(int key, int action)
 
       // Describe and display scene 3
       case '3':
+        gctx->minFilter = GL_NEAREST;
+        gctx->magFilter = GL_NEAREST;
         sceneGeomOffset=1;
         gctx->filteringMode = Nearest;
         gctx->program=programIds[ID_TEXTURE];

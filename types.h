@@ -151,6 +151,7 @@ typedef struct {
     seamFix;
   enum BumpMappingModes bumpMappingMode;
   enum FilteringModes filteringMode;
+  GLint minFilter, magFilter;
   TwBar *tbar;            /* pointer to the parameter "tweak bar" */
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* (any other information about the state of mouse or keyboard

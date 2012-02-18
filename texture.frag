@@ -42,17 +42,23 @@ void main() {
   if (gi==0) { // sphere
     c = texture(samplerA, tc);
   } else { // square
-    c = texture(samplerD, tc);
+    c = texture(samplerD, tc*100);
   }
 
-  // Phong
-  vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
-  vec3 amb = Ka * c.rgb;
+  if (gi==0) {
+    // Phong
+    vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
+    vec3 amb = Ka * c.rgb;
 
-  vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
-  float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
-  vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
+    vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
+    float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
+    vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
 
-  color.rgb = diff + amb + spec;
-  color.a = 1.0;
+    color.rgb = diff + amb + spec;
+    color.a = 1.0;
+  } else {
+    vec3 amb = Ka * c.rgb;
+    color.rgb = amb;
+    color.a = 1.0;
+  }
 }

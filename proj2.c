@@ -302,6 +302,8 @@ int contextGLInit(context_t *ctx) {
   gctx->lightMode = 0;
   gctx->gouraudMode = 1;
   gctx->seamFix = 0;
+  gctx->minFilter = GL_NEAREST;
+  gctx->magFilter = GL_NEAREST;
   gctx->perVertexTexturingMode=1; // start in perVertexTexturingMode
   perVertexTexturing();
 
@@ -314,9 +316,9 @@ int contextGLInit(context_t *ctx) {
   SPOT_M4_IDENTITY(gctx->camera.proj);
   gctx->camera.ortho = 0; // start in perspective mode
   gctx->camera.fixed = 0;
-  gctx->camera.fov = 1.57079633; // 90 degrees
-  gctx->camera.near = -2;
-  gctx->camera.far = 2;
+  gctx->camera.fov = 1.57079633/10; // 90 degrees
+  gctx->camera.near = -20;
+  gctx->camera.far = 20;
   gctx->camera.up[0] = 0;
   gctx->camera.up[1] = 1;
   gctx->camera.up[2] = 0;
@@ -421,6 +423,13 @@ int contextDraw(context_t *ctx) {
 
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D, ctx->image[3]->textureId);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gctx->minFilter);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gctx->magFilter);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ctx->image[3]->sizeX, ctx->image[3]->sizeY, 0,
+      GL_RGB, GL_UNSIGNED_BYTE, ctx->image[3]->data.v);
+  glGenerateMipmap(GL_TEXTURE_2D);
   glUniform1i(ctx->uniloc.samplerD, 3);
 
   // NOTE: we must normalize our UVN matrix
@@ -526,15 +535,23 @@ static void TW_CALL setFilteringCallback(const void *value, void *clientData) {
   gctx->filteringMode = *((const enum FilteringModes *) value);
   switch (gctx->filteringMode) {
     case Nearest:
+      gctx->minFilter=GL_NEAREST;
+      gctx->magFilter=GL_NEAREST;
       printf("\tGL_NEAREST\n");
       break;
     case Linear:
+      gctx->minFilter=GL_LINEAR;
+      gctx->magFilter=GL_LINEAR;
       printf("\tGL_LINEAR\n");
       break;
     case NearestWithMipmap:
+      gctx->minFilter=GL_NEAREST_MIPMAP_NEAREST;
+      gctx->magFilter=GL_NEAREST;
       printf("\tGL_NEAREST & GL_NEAREST_MIPMAP_NEAREST\n");
       break;
     case LinearWithMipmap:
+      gctx->minFilter=GL_LINEAR_MIPMAP_LINEAR;
+      gctx->magFilter=GL_LINEAR;
       printf("\tGL_LINEAR & GL_LINEAR_MIPMAP_LINEAR\n");
       break;
     default:
