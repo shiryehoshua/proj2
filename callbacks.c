@@ -166,6 +166,7 @@ void callbackKeyboard(int key, int action)
       case '3':
         sceneGeomOffset=1;
         gctx->filteringMode = Nearest;
+        gctx->program=programIds[ID_TEXTURE];
         setUnilocs();
         updateTweakBarVars(3);
         fprintf(stderr, "Setting scene 3: filtering modes\n"); 

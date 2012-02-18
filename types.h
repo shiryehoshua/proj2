@@ -104,6 +104,7 @@ typedef struct {
   GLint samplerA;     /* possible name of texture sampler in fragment shader */
   GLint samplerB;     /* possible name of texture sampler in fragment shader */
   GLint samplerC;     /* possible name of texture sampler in fragment shader */
+  GLint samplerD;     /* possible name of texture sampler in fragment shader */
 } uniloc_t;
 
 /*

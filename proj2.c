@@ -159,7 +159,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   ctx->shiftDown = 0;
 
   // NOTE: here we make our sphere and square and load our image and bump map
-  if (2 == geomNum && 3 == imageNum ) {
+  if (2 == geomNum && 4 == imageNum ) {
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
     scaleGeom(ctx->geom[0], 0.25);
@@ -167,6 +167,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");     // texture
     spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");  // bump map
     spotImageLoadPNG(ctx->image[2], "textimg/uchic-hght08.png");
+    spotImageLoadPNG(ctx->image[3], "textimg/check-rgb.png");
     ctx->geom[0]->Kd = 0.3;
     ctx->geom[0]->Ks = 0.3;
     ctx->geom[0]->Ka = 0.3;
@@ -197,6 +198,7 @@ void setUnilocs() {
       SET_UNILOC(samplerA);
       SET_UNILOC(samplerB);
       SET_UNILOC(samplerC);
+      SET_UNILOC(samplerD);
 #undef SET_UNILOC;
 }
 
@@ -417,6 +419,10 @@ int contextDraw(context_t *ctx) {
   glBindTexture(GL_TEXTURE_2D, ctx->image[2]->textureId);
   glUniform1i(ctx->uniloc.samplerC, 2);
 
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, ctx->image[3]->textureId);
+  glUniform1i(ctx->uniloc.samplerD, 3);
+
   // NOTE: we must normalize our UVN matrix
   norm_M4(gctx->camera.uvn);
 
@@ -441,7 +447,7 @@ int contextDraw(context_t *ctx) {
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
     glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
-    glUniform1i(ctx->uniloc.gi, gi-sceneGeomOffset);
+    glUniform1i(ctx->uniloc.gi, gi);
     glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
   }
@@ -449,8 +455,12 @@ int contextDraw(context_t *ctx) {
   /* These lines are also related to using textures.  We finish by
      leaving GL_TEXTURE0 as the active unit since AntTweakBar uses
      that, but doesn't seem to explicitly select it */
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, 3);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, 2);
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_2D, 1);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -661,7 +671,7 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-  if (!(gctx = contextNew(2, 3))) { // 3 Images!
+  if (!(gctx = contextNew(2, 4))) { // 4 Images!
     fprintf(stderr, "%s: context set-up problem:\n", me);
     spotErrorPrint();
     spotErrorClear();

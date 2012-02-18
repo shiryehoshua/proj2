@@ -12,6 +12,8 @@ uniform vec3 lightColor;
 uniform vec3 objColor;
 uniform sampler2D samplerA;
 uniform sampler2D samplerB;
+uniform sampler2D samplerC;
+uniform sampler2D samplerD;
 uniform float Ka;
 uniform float Kd;
 uniform float Ks;
@@ -37,7 +39,11 @@ void main() {
     tc = texCoord.xy;
   }
 
-  c = texture(samplerA, tc);
+  if (gi==0) { // sphere
+    c = texture(samplerA, tc);
+  } else { // square
+    c = texture(samplerD, tc);
+  }
 
   // Phong
   vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
