@@ -197,8 +197,7 @@ int contextGLInit(context_t *ctx) {
   SET_UNILOC(Ks);
   SET_UNILOC(gouraudMode);
   SET_UNILOC(shexp);
-  SET_UNILOC(samplerA);
-  SET_UNILOC(samplerB);
+  SET_UNILOC(sampler);
   
 #undef SET_UNILOC;
   
@@ -341,11 +340,11 @@ int contextDraw(context_t *ctx) {
      be sampled by which sampler.  See OpenGL SuperBible (5th edition)
      pg 279.  Also, http://tinyurl.com/7bvnej3 is amusing and
      informative */
+  /*
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, ctx->image[0]->textureId);
-  glUniform1i(ctx->uniloc.samplerA, 0);
+  glUniform1i(ctx->uniloc.samplers[i], 0);
 
-  /*
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
@@ -375,6 +374,13 @@ int contextDraw(context_t *ctx) {
     glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
     glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
+
+    if (gi < ctx->imageNum) {
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, ctx->image[gi]->textureId);
+      glUniform1i(ctx->uniloc.sampler, gi);
+    }
+
   }
   
   /* These lines are also related to using textures.  We finish by

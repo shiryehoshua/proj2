@@ -6,7 +6,7 @@ uniform int gouraudMode;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform vec3 objColor;
-uniform sampler2D samplerA;
+uniform sampler2D sampler; 
 uniform float Ka;
 uniform float Kd;
 uniform float Ks;
@@ -20,7 +20,7 @@ out vec4 color;
 
 void main() {
 
-  vec4 textureColor = texture(samplerA, texCoord);
+  vec4 textureColor = texture(sampler, texCoord);
 
   if (gouraudMode != 0) { // in Gouraud mode
     color = fragColor;

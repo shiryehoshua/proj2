@@ -83,8 +83,7 @@ typedef struct {
   GLint lightDir;     /* same name as field in context_t */
   GLint lightColor;   /* same name as field in context_t */
   GLint gouraudMode;  /* same name as field in context_t */
-  GLint samplerA;     /* possible name of texture sampler in fragment shader */
-  GLint samplerB;     /* possible name of texture sampler in fragment shader */
+  GLint sampler;   /* array of texture samplers for fragment shader */
 } uniloc_t;
 
 /*
