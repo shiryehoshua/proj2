@@ -177,6 +177,7 @@ void setUnilocs() {
       SET_UNILOC(Kd);
       SET_UNILOC(Ks);
       SET_UNILOC(gouraudMode);
+      SET_UNILOC(seamFix);
       SET_UNILOC(shexp);
       SET_UNILOC(samplerA);
       SET_UNILOC(samplerB);
@@ -270,9 +271,11 @@ int contextGLInit(context_t *ctx) {
   }
 
   // NOTE: set to view mode (default)
-  ctx->viewMode = 1;
-  ctx->modelMode = 0;
-  ctx->lightMode = 0;
+  gctx->viewMode = 1;
+  gctx->modelMode = 0;
+  gctx->lightMode = 0;
+  gctx->gouraudMode = 0;
+  gctx->seamFix = 0;
   gctx->perVertexTexturingMode=1; // start in perVertexTexturingMode
   perVertexTexturing();
 
@@ -399,6 +402,7 @@ int contextDraw(context_t *ctx) {
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   glUniform3fv(ctx->uniloc.lightColor, 1, ctx->lightColor);
   glUniform1i(ctx->uniloc.gouraudMode, ctx->gouraudMode);
+  glUniform1i(ctx->uniloc.seamFix, ctx->seamFix);
 
   // NOTE: update our geom-specific unilocs
   for (gi=0; gi<ctx->geomNum; gi++) {
@@ -457,6 +461,15 @@ static void TW_CALL getPerVertexTexturingCallback(void *value, void *clientData)
   *((int *) value) = gctx->perVertexTexturingMode;
 }
 
+static void TW_CALL setSeamFixCallback(const void *value, void *clientData) {
+  gctx->seamFix ^= 1;
+  fprintf(stderr, gctx->seamFix ? "Seam Fix: ON\n" : "Seam Fix: OFF\n");
+}
+
+static void TW_CALL getSeamFixCallback(void *value, void *clientData) {
+  *((int *) value) = gctx->seamFix;
+}
+
 // NOTE: here are our tweak bar definitions
 int updateTweakBarVars(int EE, int scene) {
   if (!EE) EE |= !TwRemoveAllVars(gctx->tbar);
@@ -486,6 +499,10 @@ int updateTweakBarVars(int EE, int scene) {
                                  TW_TYPE_BOOL8, setPerVertexTexturingCallback,
                                  getPerVertexTexturingCallback, &(gctx->perVertexTexturingMode),
                                  " label='per-vertex texturing' true=Enabled false=Disabled ");
+      if (!EE) EE |= !TwAddVarCB(gctx->tbar, "seamFix",
+                                 TW_TYPE_BOOL8, setSeamFixCallback,
+                                 getSeamFixCallback, &(gctx->seamFix),
+                                 " label='seam fix' true=Enabled false=Disabled ");
       break;
     case 3:
       if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
