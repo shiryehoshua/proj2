@@ -1,6 +1,6 @@
 #version 150
 
-// Sample vertex shader for Project 2.  Hack away!
+// Vertex shader for texture mapping 
 
 #define PI 3.14159265358979323846264338327
 
@@ -34,6 +34,7 @@ void main() {
 
   // set up texture coordinate
   if (seamFix!=0) { // without seam
+    // set texCoord.x and z to sin(theta) and cos(theta) respectively
     texCoord.x = sin(2 * PI * vertTex2.x + 0.5 * PI); 
     texCoord.z = cos(2 * PI * vertTex2.x + 0.5 * PI);
     texCoord.y = vertTex2.y;

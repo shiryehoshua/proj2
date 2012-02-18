@@ -1,6 +1,6 @@
 #version 150 
 
-// Sample fragment shader for Project 2.  Hack away!
+// Fragment shader for filtering 
 
 #define PI_INV 0.31830988618379067153776752674 
 
@@ -24,8 +24,9 @@ out vec4 color;
 
 void main() {
 
-  vec4 c;
-  vec2 tc;
+  vec4 c; // to store the color given by either texture or object color
+  vec2 tc; // to store texture coordinates
+
   if (false) { // without seam
     tc.x = 0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
     tc.y = texCoord.y;

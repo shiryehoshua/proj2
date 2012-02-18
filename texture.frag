@@ -1,6 +1,6 @@
 #version 150 
 
-// Sample fragment shader for Project 2.  Hack away!
+// Fragment shader for texture mapping 
 
 #define PI_INV 0.31830988618379067153776752674 
 
@@ -28,6 +28,8 @@ void main() {
   vec4 c;
   vec2 tc;
   if (seamFix!=0) { // without seam
+    // recover theta from the vertex shader
+    // atan(sin(theta)/cos(theta))
     tc.x = -0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
     tc.y = texCoord.y;
   }
