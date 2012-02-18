@@ -152,6 +152,7 @@ void callbackKeyboard(int key, int action)
 
       // Describe and display scene 2
       case '2':
+        gctx->geom[0]->Ka=0.3;
         sceneGeomOffset=0;
         gctx->seamFix = 0;
         gctx->perVertexTexturingMode = 1;

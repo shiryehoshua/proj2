@@ -579,7 +579,7 @@ int updateTweakBarVars(int scene) {
                              " label='Ks' min=0.0 max=1.0 step=0.005");
   if (!EE) EE |= !TwAddVarRW(gctx->tbar, "shexp",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->shexp),
-                             " label='shexp' min=0.0 max=1.0 step=0.005");
+                             " label='shexp' min=0.0 max=100.0 step=0.05");
   if (!EE) EE |= !TwAddVarRW(gctx->tbar, "bgColor",
                              TW_TYPE_COLOR3F, &(gctx->bgColor),
                              " label='bkgr color' ");
