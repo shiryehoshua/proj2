@@ -199,26 +199,26 @@ int contextGLInit(context_t *ctx) {
       printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
     }
   }
-  
+
   /* Learn (once) locations of uniform variables that we will
      frequently set */
 #define SET_UNILOC(V) ctx->uniloc.V = glGetUniformLocation(ctx->program, #V)
-  
-  SET_UNILOC(lightDir);
-  SET_UNILOC(lightColor);
-  SET_UNILOC(modelMatrix);
-  SET_UNILOC(normalMatrix);
-  SET_UNILOC(viewMatrix);
-  SET_UNILOC(projMatrix);
-  SET_UNILOC(objColor);
-  SET_UNILOC(gi);
-  SET_UNILOC(Ka);
-  SET_UNILOC(Kd);
-  SET_UNILOC(Ks);
-  SET_UNILOC(gouraudMode);
-  SET_UNILOC(shexp);
-  SET_UNILOC(samplerA);
-  SET_UNILOC(samplerB);
+
+      SET_UNILOC(lightDir);
+      SET_UNILOC(lightColor);
+      SET_UNILOC(modelMatrix);
+      SET_UNILOC(normalMatrix);
+      SET_UNILOC(viewMatrix);
+      SET_UNILOC(projMatrix);
+      SET_UNILOC(objColor);
+      SET_UNILOC(gi);
+      SET_UNILOC(Ka);
+      SET_UNILOC(Kd);
+      SET_UNILOC(Ks);
+      SET_UNILOC(gouraudMode);
+      SET_UNILOC(shexp);
+      SET_UNILOC(samplerA);
+      SET_UNILOC(samplerB);
   
 #undef SET_UNILOC;
   

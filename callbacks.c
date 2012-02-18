@@ -17,6 +17,7 @@ extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
 extern int perVertexTexturing();
 extern int programIds[NUM_PROGRAMS+1];
+extern const char *vertFnames[NUM_PROGRAMS], *fragFnames[NUM_PROGRAMS];
 
 #include <AntTweakBar.h>
 
@@ -37,8 +38,6 @@ void callbackKeyboard(int key, int action)
   int test, testMax=99999;
   char fname[128]; /* long enough to hold filename */
     
-  GLenum glerr;
-
   if (GLFW_PRESS != action) {
     GLfloat v;
     switch (key) {
@@ -162,10 +161,29 @@ void callbackKeyboard(int key, int action)
         if (perVertexTexturing()) {
           printf("\tLoading shader 'simple' with id=%d\n", programIds[ID_SIMPLE]);
           gctx->program=programIds[ID_SIMPLE];
+          gctx->program = spotProgramNew(vertFnames[ID_SIMPLE], fragFnames[ID_SIMPLE], NULL);
         } else {
           printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
           gctx->program=programIds[ID_TEXTURE];
+          gctx->program = spotProgramNew(vertFnames[ID_TEXTURE], fragFnames[ID_TEXTURE], NULL);
         }
+#define SET_UNILOC(V) gctx->uniloc.V = glGetUniformLocation(gctx->program, #V)
+        SET_UNILOC(lightDir);
+        SET_UNILOC(lightColor);
+        SET_UNILOC(modelMatrix);
+        SET_UNILOC(normalMatrix);
+        SET_UNILOC(viewMatrix);
+        SET_UNILOC(projMatrix);
+        SET_UNILOC(objColor);
+        SET_UNILOC(gi);
+        SET_UNILOC(Ka);
+        SET_UNILOC(Kd);
+        SET_UNILOC(Ks);
+        SET_UNILOC(gouraudMode);
+        SET_UNILOC(shexp);
+        SET_UNILOC(samplerA);
+        SET_UNILOC(samplerB);
+#undef SET_UNILOC;
         break;
 
       // Print keycode for debugging purposes
