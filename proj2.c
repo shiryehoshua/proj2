@@ -28,6 +28,10 @@
 #include "types.h"
 #include "matrixFunctions.h"
 
+const char *vertFnames[NUM_PROGRAMS],
+           *fragFnames[NUM_PROGRAMS];
+int programIds[NUM_PROGRAMS+1];
+
 /****
 ***** The GLFW callbacks (e.g. callbackResize) don't take additional
 ***** arguments, so we use one (and only one) global variable, of type
@@ -40,7 +44,7 @@ context_t *gctx = NULL;
 ****/
 
 
-void perVertexTexturing() {
+int perVertexTexturing() {
   int i, v;
   if (gctx->perVertexTexturingMode) {
     for (i=0; i<gctx->geomNum; i++) {
@@ -80,6 +84,7 @@ void perVertexTexturing() {
       glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb, GL_STATIC_DRAW);
     }
   }
+  return gctx->perVertexTexturingMode;
 }
 
 /* Creates a context around geomNum spotGeom's and
@@ -154,7 +159,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
 
 int contextGLInit(context_t *ctx) {
   const char me[]="contextGLInit";
-  unsigned int ii;
+  unsigned int ii, i;
 
   /* solid, not wireframe or points */
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -167,18 +172,33 @@ int contextGLInit(context_t *ctx) {
      are specified here.  This includes  vertPos and vertNorm from last project
      as well as new vertTex2 (u,v) per-vertex texture coordinates, and the
      vertTang per-vertex surface tangent 3-vector. */
-  ctx->program = spotProgramNew(ctx->vertFname, ctx->fragFname,
-                                "vertPos", spotVertAttrIndx_xyz,
-                                "vertNorm", spotVertAttrIndx_norm,
-                                "vertTex2", spotVertAttrIndx_tex2,
-                                "vertRgb", spotVertAttrIndx_rgb,
-                                "vertTang", spotVertAttrIndx_tang,
-                                /* input name, attribute index pairs
-                                   MUST BE TERMINATED with NULL */
-                                NULL);
-  if (!ctx->program) {
-    spotErrorAdd("%s: couldn't create shader program", me);
-    return 1;
+  const char *vertFname, *fragFname;
+  for (i=0; i<=NUM_PROGRAMS; i++) {
+    // Consider this the "invoked" or default shader...
+    if (i==NUM_PROGRAMS) {
+      vertFname=ctx->vertFname;
+      fragFname=ctx->fragFname;
+    } else { // Otherwise load another "required" one (i.e. for example
+      vertFname = vertFnames[i];
+      fragFname = fragFnames[i];
+    }
+    ctx->program = spotProgramNew(vertFname, fragFname,
+                                  "vertPos", spotVertAttrIndx_xyz,
+                                  "vertNorm", spotVertAttrIndx_norm,
+                                  "vertTex2", spotVertAttrIndx_tex2,
+                                  "vertRgb", spotVertAttrIndx_rgb,
+                                  "vertTang", spotVertAttrIndx_tang,
+                                  /* input name, attribute index pairs
+                                     MUST BE TERMINATED with NULL */
+                                  NULL);
+    if (i!=NUM_PROGRAMS)
+      programIds[i]=ctx->program;
+    if (!ctx->program) {
+      spotErrorAdd("%s: couldn't create shader program", me);
+      return 1;
+    } else {
+      printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
+    }
   }
   
   /* Learn (once) locations of uniform variables that we will
@@ -474,6 +494,14 @@ void usage(const char *me) {
 }
 
 int main(int argc, const char* argv[]) {
+  vertFnames[ID_SIMPLE]="simple.vert";
+  fragFnames[ID_SIMPLE]="simple.frag";
+  vertFnames[ID_PHONG]="phong.vert";
+  fragFnames[ID_PHONG]="phong.frag";
+  vertFnames[ID_TEXTURE]="texture.vert";
+  fragFnames[ID_TEXTURE]="texture.frag";
+  vertFnames[ID_BUMP]="bump.vert";
+  fragFnames[ID_BUMP]="bump.frag";
   const char *me;
 
   me = argv[0];

@@ -15,7 +15,8 @@
 extern context_t *gctx;
 extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
-extern void perVertexTexturing();
+extern int perVertexTexturing();
+extern int programIds[NUM_PROGRAMS+1];
 
 #include <AntTweakBar.h>
 
@@ -156,7 +157,14 @@ void callbackKeyboard(int key, int action)
       case 'T':
         gctx->perVertexTexturingMode ^= 1;
         fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
-        perVertexTexturing();
+        if (perVertexTexturing()) {
+          printf("\tLoading shader 'simple' with id=%d\n", ID_SIMPLE);
+          gctx->program=programIds[ID_SIMPLE];
+        } else {
+          printf("\tLoading shader 'texture' with id=%d\n", ID_TEXTURE);
+          gctx->program=programIds[ID_TEXTURE];
+        }
+        glUseProgram(gctx->program); 
         break;
 
       // Print keycode for debugging purposes
