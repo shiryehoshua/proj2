@@ -37,6 +37,8 @@ void callbackKeyboard(int key, int action)
   int test, testMax=99999;
   char fname[128]; /* long enough to hold filename */
     
+  GLenum glerr;
+
   if (GLFW_PRESS != action) {
     GLfloat v;
     switch (key) {
@@ -158,13 +160,12 @@ void callbackKeyboard(int key, int action)
         gctx->perVertexTexturingMode ^= 1;
         fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
         if (perVertexTexturing()) {
-          printf("\tLoading shader 'simple' with id=%d\n", ID_SIMPLE);
+          printf("\tLoading shader 'simple' with id=%d\n", programIds[ID_SIMPLE]);
           gctx->program=programIds[ID_SIMPLE];
         } else {
-          printf("\tLoading shader 'texture' with id=%d\n", ID_TEXTURE);
+          printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
           gctx->program=programIds[ID_TEXTURE];
         }
-        glUseProgram(gctx->program); 
         break;
 
       // Print keycode for debugging purposes

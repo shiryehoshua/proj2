@@ -191,8 +191,7 @@ int contextGLInit(context_t *ctx) {
                                   /* input name, attribute index pairs
                                      MUST BE TERMINATED with NULL */
                                   NULL);
-    if (i!=NUM_PROGRAMS)
-      programIds[i]=ctx->program;
+    programIds[i]=ctx->program;
     if (!ctx->program) {
       spotErrorAdd("%s: couldn't create shader program", me);
       return 1;
