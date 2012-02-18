@@ -16,6 +16,9 @@ extern "C" {
 #endif
 
 #include <AntTweakBar.h>
+
+#include "spot.h"
+
 /*
 ** A string to use as title bar name for the "tweak bar"
 */

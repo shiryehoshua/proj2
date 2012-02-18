@@ -10,9 +10,9 @@
 #endif
 #include "spot.h"
 
-#include "types.h"
-#include "matrixFunctions.h"
 #include "callbacks.h"
+#include "matrixFunctions.h"
+#include "types.h"
 
 extern context_t *gctx;
 

@@ -1,87 +1,88 @@
-/*
-** Demo/skeleton code for CMSC 23700 Project 2
-*/
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h> // For UCHAR_MAX and friends...
 
-#include "spot.h"
-
-// For UCHAR_MAX and friends...
-#include <limits.h>
-
-/*
-** Prior to including glfw.h: sneakily #define the "__gl_h_" include
-** guard of OpenGL/gl.h so that the "#include <OpenGL/gl.h>" in glfw.h
-** will have no effect.
-*/
 #define __gl_h_
-#define GLFW_NO_GLU /* Also, tell glfw.h not to include GLU header */
+#define GLFW_NO_GLU // Tell glfw.h not to include GLU header
 #include <GL/glfw.h>
 #undef GLFW_NO_GLU
 #undef __gl_h_
 
 #include <AntTweakBar.h>
 
+// Local includes
 #include "callbacks.h"
-#include "types.h"
 #include "matrixFunctions.h"
+#include "spot.h"
+#include "types.h"
 
-const char *vertFnames[NUM_PROGRAMS],
-           *fragFnames[NUM_PROGRAMS];
-int programIds[NUM_PROGRAMS+1];
+// NOTE: this is how we support our stack of shaders; we define each we want to load in
+//       `glInitContext()' of our program, load them once, and leave them attached until the app
+//       terminates
+const char *vertFnames[NUM_PROGRAMS], // Our list of shaders (populated in `contextGLInit()');
+           *fragFnames[NUM_PROGRAMS]; // see `types.h' for the definition of NUM_PROGRAMS
+int programIds[NUM_PROGRAMS+1];       // List of corresponding program ids (for `glUseProgram()')
 
-/****
-***** The GLFW callbacks (e.g. callbackResize) don't take additional
-***** arguments, so we use one (and only one) global variable, of type
-***** context_t.
-****/
+// Global context
 context_t *gctx = NULL;
-/****
-*****
-*****
-****/
 
-
+// NOTE: the following supports per-vertex texturing. We set the RGB values at each vertex, and
+//       our shaders linearly interpolate the values, giving it a (sick) low-res look
 int perVertexTexturing() {
   int i, v;
   if (gctx->perVertexTexturingMode) {
+    // We are coloring the vertices for each geom
     for (i=0; i<gctx->geomNum; i++) {
-      int sizeC=gctx->image[i]->sizeC,
-          maxVal=sizeC==1 ? UCHAR_MAX : USHRT_MAX,
-          sizeX=gctx->image[i]->sizeX,
-          sizeY=gctx->image[i]->sizeY,
-          sizeP=gctx->image[i]->sizeP,
-          sizeOfPixel=sizeP*sizeC,
-          sizeOfRow=sizeX*sizeOfPixel;
-      unsigned char *data = sizeC==1 ? gctx->image[i]->data.uc : (unsigned char*) gctx->image[i]->data.us;
+      int sizeC=gctx->image[i]->sizeC,            // channel size (e.g., 8- or 16-bit?)
+          maxVal=sizeC==1?UCHAR_MAX:USHRT_MAX,    // max value of a channel (e.g. 255)
+          sizeX=gctx->image[i]->sizeX,            // width of image, aka number of columns
+          sizeY=gctx->image[i]->sizeY,            // height of image, aka number of rows
+          sizeP=gctx->image[i]->sizeP,            // sizeP == number of channels (e.g., 3 for RGB)
+          sizeOfPixel=sizeP*sizeC,                // sizeOfPixel == num of channels * channel size
+          sizeOfRow=sizeX*sizeOfPixel;            // sizeOfRow (for the img_y offset)
+      // NOTE: even though we are casting data.us to an array of unsigned chars, we explicitly
+      //       handle the memory locations, so this is not a trip-up
+      unsigned char *data = sizeC==1 ? gctx->image[i]->data.uc
+        : (unsigned char*) gctx->image[i]->data.us;
+      // NOTE: now we cycle through the vertices of the i-th geom, converting each vertex's
+      //       texture coordinates into pixel coordinates, and finally into in-image memory
+      //       locations; then we write the vertex's RGB component, transformed from the range of
+      //       (0,maxVal) to (0.0,1.0)
       for (v=0; v<gctx->geom[i]->vertNum; v++) {
-        GLfloat s=gctx->geom[i]->tex2[2*v],
+        GLfloat s=gctx->geom[i]->tex2[2*v],       // (s,t) texture coordinates of a vertex, v
                 t=gctx->geom[i]->tex2[2*v+1];
-        int x=s*(sizeX-1),
+        int x=s*(sizeX-1),                        // (x,y) location of a pixel in the image
             y=t*(sizeY-1),
-            img_x=x*sizeOfPixel,
-            img_y=y*sizeOfRow;
-        //printf("v: %d\t(s,t): (%f,%f)\n\tx: %d\ty: %d\n\t", v, s, t, x, y);
-        GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal,
-                g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal,
+            img_x=x*sizeOfPixel,                  // memory location of the (x,y) pixel, given the
+            img_y=y*sizeOfRow;                    // size of a pixel
+        // NOTE: array indexing in the following way is much clearer than the bracket notation for
+        //       this application; we are dealing with images of differing bits, so it's better to
+        //       just add up the offsets explicitly defined above
+        GLfloat r=(float)(*(data+img_y+img_x+sizeC*0))/maxVal, // scale these from the (0,maxVal)
+                g=(float)(*(data+img_y+img_x+sizeC*1))/maxVal, // to (0.0,1.0)
                 b=(float)(*(data+img_y+img_x+sizeC*2))/maxVal;
-        //printf("R: %f\tG: %f\tB: %f\n", r, g, b);
-        //printf("\tsizeC: %d\tmaxVal: %d\tsizeP: %d\tsizeX: %d\tsizeY: %d\n", sizeC, maxVal, sizeP, sizeX, sizeY);
+        // Set the vertex-specific RGB values
         gctx->geom[i]->rgb[v*3+0]=r;
         gctx->geom[i]->rgb[v*3+1]=g;
         gctx->geom[i]->rgb[v*3+2]=b;
       }
+      // NOTE: we need to update the OpenGL buffer location for this geom's per-vertex RGB values,
+      //       otherwise none of this work will be evident in the shaders
       glBindBuffer(GL_ARRAY_BUFFER, gctx->geom[i]->rgbBuffId);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb, GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb,
+          GL_STATIC_DRAW);
     }
   } else {
+    // NOTE: we reset the per-vertex RGB values for each geom to 1
     for (i=0; i<gctx->geomNum; i++) {
       for (v=0; v<gctx->geom[i]->vertNum; v++)
         gctx->geom[i]->rgb[v*3+0]=gctx->geom[i]->rgb[v*3+1]=gctx->geom[i]->rgb[v*3+2]=1;
+      // NOTE: we need to update the OpenGL buffer location for this geom's per-vertex RGB values,
+      //       otherwise none of this work will be evident in the shaders
       glBindBuffer(GL_ARRAY_BUFFER, gctx->geom[i]->rgbBuffId);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb, GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*gctx->geom[i]->vertNum*3, gctx->geom[i]->rgb,
+          GL_STATIC_DRAW);
     }
   }
   return gctx->perVertexTexturingMode;
@@ -96,7 +97,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   
   ctx = (context_t *)calloc(1, sizeof(context_t));
   if (!ctx) {
-//    spotErrorAdd("%s: couldn't alloc context?", me);
+    spotErrorAdd("%s: couldn't alloc context?", me);
     return NULL;
   }
 
@@ -131,7 +132,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   SPOT_V3_SET(ctx->bgColor, 0.2f, 0.25f, 0.3f);
   SPOT_V3_SET(ctx->lightDir, 1.0f, 0.0f, 0.0f);
   SPOT_V3_SET(ctx->lightColor, 1.0f, 1.0f, 1.0f);
-  ctx->running = 1; /* non-zero == true */
+  ctx->running = 1;
   ctx->program = 0;
   ctx->winSizeX = 900;
   ctx->winSizeY = 700;
@@ -142,83 +143,27 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   ctx->buttonDown = 0;
   ctx->shiftDown = 0;
 
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  /* good place to initialize camera */
-
+  // NOTE: here we make our sphere and square and load our image and bump map
   if (2 == geomNum) {
-/*
-    ctx->geom[1] = spotGeomNewSquare();
-    spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
-    ctx->geom[0] = spotGeomNewSphere();
-    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
-    scaleGeom(ctx->geom[0], 0.25);
-    scaleGeom(ctx->geom[1], 0.25);
-
-    ctx->geom[0]->Kd = 0;
-    ctx->geom[0]->Ks = 0;
-    ctx->geom[0]->Ka = 1;
-*/
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
     scaleGeom(ctx->geom[0], 0.25);
     scaleGeom(ctx->geom[1], 0.25);
-    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
-    spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
+    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");     // texture
+    spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");  // bump map
     ctx->geom[0]->Kd = 0.3;
     ctx->geom[0]->Ks = 0.3;
     ctx->geom[0]->Ka = 0.3;
   }
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   return ctx;
 }
 
-int contextGLInit(context_t *ctx) {
-  const char me[]="contextGLInit";
-  unsigned int ii, i;
-
-  /* solid, not wireframe or points */
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  /* No backface culling for now */
-  glDisable(GL_CULL_FACE);
-  /* Yes, do depth testing */
-  glEnable(GL_DEPTH_TEST);
-
-  /* Create shader program.  Note that the names of per-vertex attributes
-     are specified here.  This includes  vertPos and vertNorm from last project
-     as well as new vertTex2 (u,v) per-vertex texture coordinates, and the
-     vertTang per-vertex surface tangent 3-vector. */
-  const char *vertFname, *fragFname;
-  for (i=0; i<=NUM_PROGRAMS; i++) {
-    // Consider this the "invoked" or default shader...
-    if (i==NUM_PROGRAMS) {
-      vertFname=ctx->vertFname;
-      fragFname=ctx->fragFname;
-    } else { // Otherwise load another "required" one (i.e. for example
-      vertFname = vertFnames[i];
-      fragFname = fragFnames[i];
-    }
-    ctx->program = spotProgramNew(vertFname, fragFname,
-                                  "vertPos", spotVertAttrIndx_xyz,
-                                  "vertNorm", spotVertAttrIndx_norm,
-                                  "vertTex2", spotVertAttrIndx_tex2,
-                                  "vertRgb", spotVertAttrIndx_rgb,
-                                  "vertTang", spotVertAttrIndx_tang,
-                                  /* input name, attribute index pairs
-                                     MUST BE TERMINATED with NULL */
-                                  NULL);
-    programIds[i]=ctx->program;
-    if (!ctx->program) {
-      spotErrorAdd("%s: couldn't create shader program", me);
-      return 1;
-    } else {
-      printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
-    }
-  }
-
+// NOTE: it makes sense to let this be its own function, since we need to call it upon changing
+//       gctx->program in our shaders
+void setUnilocs() {
   /* Learn (once) locations of uniform variables that we will
      frequently set */
-#define SET_UNILOC(V) ctx->uniloc.V = glGetUniformLocation(ctx->program, #V)
-
+#define SET_UNILOC(V) gctx->uniloc.V = glGetUniformLocation(gctx->program, #V)
       SET_UNILOC(lightDir);
       SET_UNILOC(lightColor);
       SET_UNILOC(modelMatrix);
@@ -234,8 +179,73 @@ int contextGLInit(context_t *ctx) {
       SET_UNILOC(shexp);
       SET_UNILOC(samplerA);
       SET_UNILOC(samplerB);
-  
 #undef SET_UNILOC;
+}
+
+int contextGLInit(context_t *ctx) {
+  const char me[]="contextGLInit";
+  unsigned int ii, i;
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glDisable(GL_CULL_FACE); // No backface culling for now
+  glEnable(GL_DEPTH_TEST); // Yes, do depth testing
+
+  /* Create shader program.  Note that the names of per-vertex attributes
+     are specified here.  This includes  vertPos and vertNorm from last project
+     as well as new vertTex2 (u,v) per-vertex texture coordinates, and the
+     vertTang per-vertex surface tangent 3-vector. */
+
+  // NOTE: here is our shader "stack"; the ID_${shader} definitions allow easy retrieval of the
+  //       program id from the programIds array after `glLinkProgram' calls
+  vertFnames[ID_SIMPLE]="simple.vert";
+  fragFnames[ID_SIMPLE]="simple.frag";
+  vertFnames[ID_PHONG]="phong.vert";
+  fragFnames[ID_PHONG]="phong.frag";
+  vertFnames[ID_TEXTURE]="texture.vert";
+  fragFnames[ID_TEXTURE]="texture.frag";
+  vertFnames[ID_BUMP]="bump.vert";
+  fragFnames[ID_BUMP]="bump.frag";
+
+  // NOTE: we loop for as many shaders as are in our "stack" (NUM_PROGRAMS), and then once more
+  //       to pull in whatever shader was passed in via the terminal (or not, if we have
+  //       ctx->vertName==NULL)
+  const char *vertFname, *fragFname;
+  for (i=0; i<=NUM_PROGRAMS-(ctx->vertFname==NULL?1:0); i++) {
+    // NOTE: consider this the "invoked" or default shader paseed via the terminal; it will be
+    //       loaded last, and thus the first shader visible
+    if (i==NUM_PROGRAMS) {
+      vertFname=ctx->vertFname;
+      fragFname=ctx->fragFname;
+    // otherwise, we want to load our "stack" of shaders
+    } else {
+      vertFname = vertFnames[i];
+      fragFname = fragFnames[i];
+    }
+    // NOTE: use `spotProgramNew' to handle all the `glLinkProgram' specifics; we also specify the
+    //       per-vertex attributes we need
+    ctx->program = spotProgramNew(vertFname, fragFname,
+                                  "vertPos", spotVertAttrIndx_xyz,
+                                  "vertNorm", spotVertAttrIndx_norm,
+                                  "vertTex2", spotVertAttrIndx_tex2,
+                                  "vertRgb", spotVertAttrIndx_rgb,
+                                  "vertTang", spotVertAttrIndx_tang,
+                                  /* input name, attribute index pairs
+                                     MUST BE TERMINATED with NULL */
+                                  NULL);
+    // NOTE: we save the program id for easy retrieval from our callbacks; i here corresponds to
+    //       one of ID_SIMPLE, ID_PHONG, etc., so we can reset the gctx->program to
+    //       programIds[ID_${shader}] to switch shaders
+    programIds[i]=ctx->program;
+    if (!ctx->program) {
+      spotErrorAdd("%s: couldn't create shader program", me);
+      return 1;
+    } else {
+      // printf("%d: Program (%s,%s) loaded...\n", ctx->program, vertFname, fragFname);
+    }
+  }
+
+  // NOTE: this sets the uniform locations for the _invoked_ shader
+  setUnilocs();
   
   if (ctx->geom) {
     for (ii=0; ii<ctx->geomNum; ii++) {
@@ -248,7 +258,7 @@ int contextGLInit(context_t *ctx) {
   if (ctx->image) {
     for (ii=0; ii<ctx->imageNum; ii++) {
       if (ctx->image[ii]->data.v) {
-        /* only bother with GL init when image data has been set */
+        // Only bother with GL init when image data has been set
         if (spotImageGLInit(ctx->image[ii])) {
           spotErrorAdd("%s: trouble with image[%u]", me, ii);
           return 1;
@@ -257,20 +267,21 @@ int contextGLInit(context_t *ctx) {
     }
   }
 
-  //Set to view mode (default)
+  // NOTE: set to view mode (default)
   ctx->viewMode = 1;
   ctx->modelMode = 0;
   ctx->lightMode = 0;
+  gctx->perVertexTexturingMode=1; // start in perVertexTexturingMode
+  perVertexTexturing();
 
-  //Model Initializations
+  // NOTE: model initializations
   SPOT_M4_IDENTITY(gctx->model.xyzw);
   SPOT_M4_IDENTITY(gctx->model.custom);
 
-  //Camera Initializations
+  // NOTE: camera initializations
   SPOT_M4_IDENTITY(gctx->camera.uvn);
   SPOT_M4_IDENTITY(gctx->camera.proj);
-
-  gctx->camera.ortho = 1;
+  gctx->camera.ortho = 0; // start in perspective mode
   gctx->camera.fixed = 0;
   gctx->camera.fov = 1.57079633; // 90 degrees
   gctx->camera.near = -2;
@@ -285,12 +296,10 @@ int contextGLInit(context_t *ctx) {
   gctx->camera.at[1] = 0;
   gctx->camera.at[2] = 0;
 
+  // NOTE: Mouse function intializations
   gctx->mouseFun.m = NULL;
   gctx->mouseFun.f = identity;
-  gctx->mouseFun.offset = gctx->mouseFun.multiplier = gctx->mouseFun.i = 0;
-
-  gctx->perVertexTexturingMode=1;
-  perVertexTexturing();
+  gctx->mouseFun.offset=gctx->mouseFun.multiplier=gctx->mouseFun.i = 0;
 
   return 0;
 }
@@ -318,10 +327,6 @@ int contextGLDone(context_t *ctx) {
   return 0;
 }
 
-/*
-** Anything that is dynamically (at run-time) allocated in contextNew()
-** should be cleaned up here
-*/
 context_t *contextNix(context_t *ctx) {
   unsigned int ii;
 
@@ -344,14 +349,6 @@ context_t *contextNix(context_t *ctx) {
   return NULL;
 }
 
-/* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-/* 
-   (other functions to act on the context_t; such as dealing with
-   viewpoint changes 
-*/
-
-/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
-
 int contextDraw(context_t *ctx) {
   const char me[]="contextDraw";
   unsigned int gi;
@@ -369,8 +366,6 @@ int contextDraw(context_t *ctx) {
   /* Clear the window and the depth buffer */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-
   /* The following will be useful when you want to use textures,
      especially two textures at once, here sampled in the fragment
      shader with "samplerA" and "samplerB".  There are some
@@ -378,33 +373,36 @@ int contextDraw(context_t *ctx) {
      be sampled by which sampler.  See OpenGL SuperBible (5th edition)
      pg 279.  Also, http://tinyurl.com/7bvnej3 is amusing and
      informative */
+
+  // NOTE: recall that image[0] is "uchic-rgb.png"
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, ctx->image[0]->textureId);
   glUniform1i(ctx->uniloc.samplerA, 0);
 
+  // NOTE: recall that image[0] is "uchic-norm08.png"
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
 
-
+  // NOTE: we must normalize our UVN matrix
   norm_M4(gctx->camera.uvn);
 
+  // NOTE: update our unilocs
   glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, gctx->camera.uvn);
   glUniformMatrix4fv(ctx->uniloc.projMatrix, 1, GL_FALSE, gctx->camera.proj);
-
   glUniform3fv(ctx->uniloc.lightDir, 1, ctx->lightDir);
   glUniform3fv(ctx->uniloc.lightColor, 1, ctx->lightColor);
   glUniform1i(ctx->uniloc.gouraudMode, ctx->gouraudMode);
+
+  // NOTE: update our geom-specific unilocs
   for (gi=0; gi<ctx->geomNum; gi++) {
+    // NOTE: we normalize the model matrix; while we may not need to, it is cheap to do so
     norm_M4(gctx->geom[gi]->modelMatrix);
-
-    glUniformMatrix4fv(ctx->uniloc.modelMatrix, 
-                       1, GL_FALSE, ctx->geom[gi]->modelMatrix);
-
-//    updateNormals(gctx->geom[gi]->normalMatrix, gctx->geom[gi]->normalMatrix);
-
-    glUniformMatrix3fv(ctx->uniloc.normalMatrix,
-                       1, GL_FALSE, ctx->geom[gi]->normalMatrix);
+    glUniformMatrix4fv(ctx->uniloc.modelMatrix, 1, GL_FALSE, ctx->geom[gi]->modelMatrix);
+    // NOTE: we update normals in our `matrixFunctions.c' functions on a case-by-case basis
+    // updateNormals(gctx->geom[gi]->normalMatrix, gctx->geom[gi]->normalMatrix);
+    glUniformMatrix3fv(ctx->uniloc.normalMatrix, 1, GL_FALSE, ctx->geom[gi]->normalMatrix);
+    //
     glUniform3fv(ctx->uniloc.objColor, 1, ctx->geom[gi]->objColor);
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
@@ -428,17 +426,73 @@ int contextDraw(context_t *ctx) {
   GLenum glerr = glGetError();
   if (glerr) {
     while (glerr) {
-      spotErrorAdd("%s: OpenGL error %d (%s)",
-                   me, glerr, spotGLErrorString(glerr));
+      spotErrorAdd("%s: OpenGL error %d (%s)", me, glerr, spotGLErrorString(glerr));
       glerr = glGetError();
     }
     return 1;
   }
-  /* else */
   return 0;
 }
 
-int createTweakBar(context_t *ctx) {
+static void TW_CALL setPerVertexTexturingCallback(const void *value, void *clientData) {
+  gctx->perVertexTexturingMode = *((const int *) value);
+  gctx->perVertexTexturingMode ^= 1;
+  fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
+  if (perVertexTexturing()) {
+    printf("\tLoading shader 'simple' with id=%d\n", programIds[ID_SIMPLE]);
+    gctx->program=programIds[ID_SIMPLE];
+  } else {
+    printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
+    gctx->program=programIds[ID_TEXTURE];
+  }
+  setUnilocs();
+}
+
+static void TW_CALL getPerVertexTexturingCallback(void *value, void *clientData) {
+}
+
+// NOTE: here are our tweak bar definitions
+int updateTweakBarVars(int EE, int scene) {
+  if (!EE) EE |= !TwRemoveAllVars(gctx->tbar);
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Ka",
+                             TW_TYPE_FLOAT, &(gctx->geom[0]->Ka),
+                             " label='geom[0]->Ka' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Kd",
+                             TW_TYPE_FLOAT, &(gctx->geom[0]->Kd),
+                             " label='geom[0]->Kd' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Ks",
+                             TW_TYPE_FLOAT, &(gctx->geom[0]->Ks),
+                             " label='geom[0]->Ks' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->shexp",
+                             TW_TYPE_FLOAT, &(gctx->geom[0]->shexp),
+                             " label='geom[0]->shexp' min=0.0 max=1.0 step=0.005");
+  if (!EE) EE |= !TwAddVarRW(gctx->tbar, "bgColor",
+                             TW_TYPE_COLOR3F, &(gctx->bgColor),
+                             " label='bkgr color' ");
+  switch (scene) {
+    case 1:
+      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
+                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
+                                 " label='gouraud mode' true=Enabled false=Disabled ");
+      break;
+    case 2:
+      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
+                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
+                                 " label='gouraud mode' true=Enabled false=Disabled ");
+      break;
+    case 3:
+      if (!EE) EE |= !TwAddVarCB(gctx->tbar, "perVertexTexturing",
+                                 TW_TYPE_BOOL8, setPerVertexTexturingCallback,
+                                 getPerVertexTexturingCallback, &(gctx->perVertexTexturingMode),
+                                 " label='per-vertex texturing' true=Enabled false=Disabled ");
+      break;
+    default:
+      break;
+  }
+  return EE;
+}
+
+int createTweakBar(context_t *ctx, int scene) {
   const char me[]="createTweakBar";
   char buff[128];
   int EE;  /* we have an error */
@@ -467,28 +521,8 @@ int createTweakBar(context_t *ctx) {
           ctx->tbarSizeX, ctx->tbarSizeY);
   if (!EE) EE |= !TwDefine(buff);
   
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  /* Add definitions of the variables that we want to tweak */
-
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Ka",
-                             TW_TYPE_FLOAT, &(ctx->geom[0]->Ka),
-                             " label='geom[0]->Ka' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Kd",
-                             TW_TYPE_FLOAT, &(ctx->geom[0]->Kd),
-                             " label='geom[0]->Kd' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->Ks",
-                             TW_TYPE_FLOAT, &(ctx->geom[0]->Ks),
-                             " label='geom[0]->Ks' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "geom[0]->shexp",
-                             TW_TYPE_FLOAT, &(ctx->geom[0]->shexp),
-                             " label='geom[0]->shexp' min=0.0 max=1.0 step=0.005");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "bgColor",
-                             TW_TYPE_COLOR3F, &(ctx->bgColor),
-                             " label='bkgr color' ");
-  if (!EE) EE |= !TwAddVarRW(ctx->tbar, "gouraudMode",
-                             TW_TYPE_INT32, &(ctx->gouraudMode),
-                             " label='gouraud mode' min=0.0 max=1.0 step=1 ");
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+  // NOTE: we broke this section out for easy update of tweak bar vars per-scene
+  EE = updateTweakBarVars(EE, scene);
 
   /* see also:
      http://www.antisphere.com/Wiki/tools:anttweakbar:twtype
@@ -496,45 +530,45 @@ int createTweakBar(context_t *ctx) {
   */
 
   if (EE) {
-    spotErrorAdd("%s: AntTweakBar initialization failed:\n      %s",
-                 me, TwGetLastError());
+    spotErrorAdd("%s: AntTweakBar initialization failed:\n\t%s", me, TwGetLastError());
     return 1;
   }
   return 0;
 }
 
 void usage(const char *me) {
-  /*                 argv[0]     [1]           [2]     3 == argc */
-  fprintf(stderr, "usage: %s <vertshader> <fragshader>\n", me);
+  fprintf(stderr, "usage: %s [<vertshader> <fragshader>]\n", me);
+  fprintf(stderr, "\tCall `%s', optionally taking a default pair of vertex and fragment\n", me);
+  fprintf(stderr, "\tshaders to render. Otherwise we just load our stack of shaders.\n");
 }
 
 int main(int argc, const char* argv[]) {
-  vertFnames[ID_SIMPLE]="simple.vert";
-  fragFnames[ID_SIMPLE]="simple.frag";
-  vertFnames[ID_PHONG]="phong.vert";
-  fragFnames[ID_PHONG]="phong.frag";
-  vertFnames[ID_TEXTURE]="texture.vert";
-  fragFnames[ID_TEXTURE]="texture.frag";
-  vertFnames[ID_BUMP]="bump.vert";
-  fragFnames[ID_BUMP]="bump.frag";
   const char *me;
-
   me = argv[0];
-  if (3 != argc) {
+  // NOTE: we now allow you to either pass in an "invoked" or default shader to render, or to let
+  //       us just set up our stack; hence you either pass 2 additional arguments or none at all
+  // NOTE: we aren't explicity defining this functionality, but obviously `proj2 -h' will show the
+  //       usage pattern
+  if (1!=argc && 3!=argc) {
     usage(me);
     exit(1);
   }
 
-  /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   if (!(gctx = contextNew(2, 2))) { // 2 Images!
     fprintf(stderr, "%s: context set-up problem:\n", me);
-    spotErrorPrint(); spotErrorClear();
+    spotErrorPrint();
+    spotErrorClear();
     exit(1);
   }
-  /* save shader filenames */
-  gctx->vertFname = argv[1];
-  gctx->fragFname = argv[2];
-  /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+
+  if (argc==3) {
+    gctx->vertFname = argv[1];
+    gctx->fragFname = argv[2];
+  } else {
+    // NOTE: if invoked with no shaders, set these to NULL; `contextGlInit()' will catch these
+    gctx->vertFname = NULL;
+    gctx->fragFname = NULL;
+  }
 
   if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
@@ -547,14 +581,13 @@ int main(int argc, const char* argv[]) {
   glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
   glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  if (!glfwOpenWindow(gctx->winSizeX, gctx->winSizeY,
-                      0,0,0,0, 32,0, GLFW_WINDOW)) {
+  if (!glfwOpenWindow(gctx->winSizeX, gctx->winSizeY, 0, 0, 0, 0, 32, 0, GLFW_WINDOW)) {
     fprintf(stderr, "Failed to open GLFW window\n");
     glfwTerminate();
     exit(1);
   }
 
-  glfwSetWindowTitle("Project 2 Window Title (change me!)");
+  glfwSetWindowTitle("Project 2: Shady");
   glfwEnable(GLFW_MOUSE_CURSOR);
   glfwEnable(GLFW_KEY_REPEAT);
   glfwSwapInterval(1);
@@ -580,7 +613,7 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-  if (createTweakBar(gctx)) {
+  if (createTweakBar(gctx, 0)) {
     fprintf(stderr, "%s: AntTweakBar problem:\n", me);
     spotErrorPrint(); spotErrorClear();
     TwTerminate();
@@ -600,6 +633,7 @@ int main(int argc, const char* argv[]) {
 
   /* Main loop */
   while (gctx->running) {
+    // NOTE: we update UVN every step
     updateUVN(gctx->camera.uvn, gctx->camera.at, gctx->camera.from, gctx->camera.up);
     /* render */
     if (contextDraw(gctx)) {

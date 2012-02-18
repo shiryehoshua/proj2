@@ -16,8 +16,10 @@ extern context_t *gctx;
 extern void setScene(int i);
 extern int contextDraw(context_t *ctx);
 extern int perVertexTexturing();
+extern void setUnilocs();
 extern int programIds[NUM_PROGRAMS+1];
 extern const char *vertFnames[NUM_PROGRAMS], *fragFnames[NUM_PROGRAMS];
+extern int updateTweakBarVars(int EE, int scene);
 
 #include <AntTweakBar.h>
 
@@ -139,20 +141,23 @@ void callbackKeyboard(int key, int action)
 
       // Describe and display scene 1
       case '1':
+        updateTweakBarVars(0, 1);
         fprintf(stderr, "Setting scene 1: Demonstrating model, view and orthographic view transoforms\n");
-        setScene(1);
+        //setScene(1);
         break;
 
       // Describe and display scene 2
       case '2':
+        updateTweakBarVars(0, 2);
         fprintf(stderr, "Setting scene 2: Demonstrating perspective transform\n");
-        setScene(2);
+        //setScene(2);
         break;
 
       // Describe and display scene 3
       case '3':
+        updateTweakBarVars(0, 3);
         fprintf(stderr, "Setting scene 3: Demostrating correct surface normals\n"); 
-        setScene(3);
+        //setScene(3);
         break;
 
       case 'T':
@@ -165,23 +170,7 @@ void callbackKeyboard(int key, int action)
           printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
           gctx->program=programIds[ID_TEXTURE];
         }
-#define SET_UNILOC(V) gctx->uniloc.V = glGetUniformLocation(gctx->program, #V)
-        SET_UNILOC(lightDir);
-        SET_UNILOC(lightColor);
-        SET_UNILOC(modelMatrix);
-        SET_UNILOC(normalMatrix);
-        SET_UNILOC(viewMatrix);
-        SET_UNILOC(projMatrix);
-        SET_UNILOC(objColor);
-        SET_UNILOC(gi);
-        SET_UNILOC(Ka);
-        SET_UNILOC(Kd);
-        SET_UNILOC(Ks);
-        SET_UNILOC(gouraudMode);
-        SET_UNILOC(shexp);
-        SET_UNILOC(samplerA);
-        SET_UNILOC(samplerB);
-#undef SET_UNILOC;
+        setUnilocs();
         break;
 
       // Print keycode for debugging purposes
@@ -253,7 +242,6 @@ void callbackMouseButton(int button, int action)
     } else if (xf < FIFTH) {
       gctx->mouseFun.i = VERTICAL;
       if (!gctx->shiftDown) {
-        /*
         printf(" ... (mode V) zooms in or out\n");
         if (gctx->viewMode) {
           gctx->mouseFun.m = &gctx->camera.fov;
@@ -262,7 +250,6 @@ void callbackMouseButton(int button, int action)
           gctx->mouseFun.multiplier = 0.25;
           callbackResize(gctx->winSizeX, gctx->winSizeY);
         }
-        */
       } else {
         printf(" ... (mode V) shrinks or grows (far distance) - (near distance)\n");
         if (gctx->viewMode) {
