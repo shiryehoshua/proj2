@@ -18,14 +18,18 @@ uniform float shexp;
 in vec4 vertPos;
 in vec3 vertRgb;
 in vec3 vertNorm;
+in vec2 vertTex2;
 
 out vec4 fragColor;
 out vec3 vnrm;
+out vec2 texCoord;
 
 void main() {
 
   // transform vertices 
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
+
+  texCoord = vertTex2;
   
   // surface normal in view coords
   vnrm = normalMatrix * vertNorm;

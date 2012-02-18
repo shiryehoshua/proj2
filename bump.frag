@@ -6,6 +6,9 @@ uniform int gouraudMode;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform vec3 objColor;
+uniform int gi;
+uniform sampler2D samplerA;
+uniform sampler2D samplerB;
 uniform float Ka;
 uniform float Kd;
 uniform float Ks;
@@ -13,16 +16,28 @@ uniform float shexp;
 
 in vec4 fragColor;
 in vec3 vnrm;
+in vec2 texCoord;
 
 out vec4 color;
 
 void main() {
 
-  vec3 diff = Kd * max(0.0, dot(vnrm, lightDir)) * objColor;
-  vec3 amb = Ka * objColor;
 
-  vec3 r = normalize(reflect(-normalize(lightDir), normalize(vnrm)));
-  float vnrmdotr = max(0.0, dot(normalize(vnrm), r));
+  vec4 a, b, c;
+  a = texture(samplerA, texCoord);
+  b = texture(samplerB, texCoord);
+
+  // calculate new normal
+  vec3 n;
+  n.x = vnrm.x + b.x;
+  n.y = vnrm.y + b.y;
+  n.z = vnrm.z;
+
+  vec3 diff = Kd * max(0.0, dot(n, lightDir)) * a.rgb;
+  vec3 amb = Ka * a.rgb;
+
+  vec3 r = normalize(reflect(-normalize(lightDir), normalize(n)));
+  float vnrmdotr = max(0.0, dot(normalize(n), r));
   vec3 spec = Ks * pow(vnrmdotr, shexp) * lightColor;
 
   color.rgb = diff + amb + spec;

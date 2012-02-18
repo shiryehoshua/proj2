@@ -141,12 +141,27 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   /* good place to initialize camera */
 
   if (2 == geomNum) {
+/*
+    ctx->geom[1] = spotGeomNewSquare();
+    spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
+    ctx->geom[0] = spotGeomNewSphere();
+    spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
+    scaleGeom(ctx->geom[0], 0.25);
+    scaleGeom(ctx->geom[1], 0.25);
+
+    ctx->geom[0]->Kd = 0;
+    ctx->geom[0]->Ks = 0;
+    ctx->geom[0]->Ka = 1;
+*/
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
     scaleGeom(ctx->geom[0], 0.25);
     scaleGeom(ctx->geom[1], 0.25);
     spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
-    spotImageLoadPNG(ctx->image[1], "textimg/bw.png");
+    spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
+    ctx->geom[0]->Kd = 0.3;
+    ctx->geom[0]->Ks = 0.3;
+    ctx->geom[0]->Ka = 0.3;
   }
   /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
   return ctx;
