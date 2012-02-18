@@ -209,7 +209,6 @@ GLint spotProgramNew(const char *vertFileName,
        varName = va_arg(vargs, const char *)) {
     varIndx = va_arg(vargs, GLuint);
     glBindAttribLocation(program, varIndx, varName);
-    printf("%d: %s\n", varIndx, varName);
   }
   va_end(vargs);
 
@@ -234,8 +233,8 @@ GLint spotProgramNew(const char *vertFileName,
   }
 
   /* shaders no longer needed post-linking */
-  glDeleteShader(vertId);
-  glDeleteShader(fragId);
+  //glDeleteShader(vertId);
+  //glDeleteShader(fragId);
     
   return program;
 }

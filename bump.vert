@@ -21,6 +21,7 @@ in vec3 vertNorm;
 in vec2 vertTex2;
 
 out vec4 fragColor;
+out vec2 texCoord;
 out vec3 vnrm;
 out vec2 texCoord;
 

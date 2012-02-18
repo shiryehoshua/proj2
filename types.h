@@ -21,6 +21,15 @@ extern "C" {
 */
 #define TBAR_NAME "Project2-Params"
 
+// Shaders are populated in our main
+#define NUM_PROGRAMS 4
+// Easy program lookup--refer to programIds[ID_${shader}] for the id to use with
+//    `glLinkProgram'
+#define ID_SIMPLE 0
+#define ID_PHONG 1
+#define ID_TEXTURE 2
+#define ID_BUMP 3
+
 /*
 ** The camera_t is a suggested storage place for all the parameters associated
 ** with determining how you see the scene, which is used to determine one of

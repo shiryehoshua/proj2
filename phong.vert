@@ -20,6 +20,7 @@ in vec3 vertRgb;
 in vec3 vertNorm;
 
 out vec4 fragColor;
+out vec2 texCoord;
 out vec3 vnrm;
 
 void main() {
