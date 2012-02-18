@@ -161,11 +161,9 @@ void callbackKeyboard(int key, int action)
         if (perVertexTexturing()) {
           printf("\tLoading shader 'simple' with id=%d\n", programIds[ID_SIMPLE]);
           gctx->program=programIds[ID_SIMPLE];
-          gctx->program = spotProgramNew(vertFnames[ID_SIMPLE], fragFnames[ID_SIMPLE], NULL);
         } else {
           printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
           gctx->program=programIds[ID_TEXTURE];
-          gctx->program = spotProgramNew(vertFnames[ID_TEXTURE], fragFnames[ID_TEXTURE], NULL);
         }
 #define SET_UNILOC(V) gctx->uniloc.V = glGetUniformLocation(gctx->program, #V)
         SET_UNILOC(lightDir);
