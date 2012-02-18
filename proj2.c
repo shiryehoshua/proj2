@@ -145,7 +145,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* good place to initialize camera */
 
-  if (2 == geomNum) {
+  if (2 == geomNum && 3 == imageNum ) {
 /*
     ctx->geom[1] = spotGeomNewSquare();
     spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
@@ -164,6 +164,7 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
     scaleGeom(ctx->geom[1], 0.25);
     spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");
     spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");
+    spotImageLoadPNG(ctx->image[2], "textimg/uchic-hght08.png");
     ctx->geom[0]->Kd = 0.3;
     ctx->geom[0]->Ks = 0.3;
     ctx->geom[0]->Ka = 0.3;
@@ -234,6 +235,7 @@ int contextGLInit(context_t *ctx) {
       SET_UNILOC(shexp);
       SET_UNILOC(samplerA);
       SET_UNILOC(samplerB);
+      SET_UNILOC(samplerC);
   
 #undef SET_UNILOC;
   
@@ -386,6 +388,10 @@ int contextDraw(context_t *ctx) {
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
 
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, ctx->image[2]->textureId);
+  glUniform1i(ctx->uniloc.samplerC, 2);
+
 
   norm_M4(gctx->camera.uvn);
 
@@ -526,7 +532,7 @@ int main(int argc, const char* argv[]) {
   }
 
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
-  if (!(gctx = contextNew(2, 2))) { // 2 Images!
+  if (!(gctx = contextNew(2, 3))) { // 2 Images!
     fprintf(stderr, "%s: context set-up problem:\n", me);
     spotErrorPrint(); spotErrorClear();
     exit(1);
