@@ -144,13 +144,14 @@ context_t *contextNew(unsigned int geomNum, unsigned int imageNum) {
   ctx->shiftDown = 0;
 
   // NOTE: here we make our sphere and square and load our image and bump map
-  if (2 == geomNum) {
+  if (2 == geomNum && 3 == imageNum ) {
     ctx->geom[0] = spotGeomNewSphere();
     ctx->geom[1] = spotGeomNewSquare();
     scaleGeom(ctx->geom[0], 0.25);
     scaleGeom(ctx->geom[1], 0.25);
     spotImageLoadPNG(ctx->image[0], "textimg/uchic-rgb.png");     // texture
     spotImageLoadPNG(ctx->image[1], "textimg/uchic-norm08.png");  // bump map
+    spotImageLoadPNG(ctx->image[2], "textimg/uchic-hght08.png");
     ctx->geom[0]->Kd = 0.3;
     ctx->geom[0]->Ks = 0.3;
     ctx->geom[0]->Ka = 0.3;
@@ -384,6 +385,10 @@ int contextDraw(context_t *ctx) {
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
 
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, ctx->image[2]->textureId);
+  glUniform1i(ctx->uniloc.samplerC, 2);
+
   // NOTE: we must normalize our UVN matrix
   norm_M4(gctx->camera.uvn);
 
@@ -554,7 +559,7 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-  if (!(gctx = contextNew(2, 2))) { // 2 Images!
+  if (!(gctx = contextNew(2, 3))) { // 3 Images!
     fprintf(stderr, "%s: context set-up problem:\n", me);
     spotErrorPrint();
     spotErrorClear();

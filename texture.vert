@@ -2,6 +2,8 @@
 
 // Sample vertex shader for Project 2.  Hack away!
 
+#define PI 3.14159265358979323846264338327
+
 uniform int gouraudMode;
 uniform mat4 modelMatrix;
 uniform mat3 normalMatrix;
@@ -21,7 +23,7 @@ in vec3 vertNorm;
 in vec2 vertTex2;
 
 out vec4 fragColor;
-out vec2 texCoord;
+out vec3 texCoord;
 out vec3 vnrm;
 
 void main() {
@@ -30,7 +32,14 @@ void main() {
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
 
   // set up texture coordinate
-  texCoord = vertTex2; 
+  if (true) { // without seam
+    texCoord.x = sin(2 * PI * vertTex2.x + 0.5 * PI); 
+    texCoord.z = cos(2 * PI * vertTex2.x + 0.5 * PI);
+    texCoord.y = vertTex2.y;
+  }
+  else {
+    texCoord.xy = vertTex2; 
+  }
 
   if (gouraudMode != 0) { // in Gouraud mode
     // transform normals
