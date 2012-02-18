@@ -5,6 +5,7 @@
 #define PI_INV 0.31830988618379067153776752674 
 
 uniform int gouraudMode;
+uniform int seamFix;
 uniform int gi;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
@@ -26,8 +27,8 @@ void main() {
 
   vec4 c;
   vec2 tc;
-  if (true) { // without seam
-    tc.x = 0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
+  if (seamFix!=0) { // without seam
+    tc.x = -0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
     tc.y = texCoord.y;
   }
   else {

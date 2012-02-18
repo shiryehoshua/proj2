@@ -96,6 +96,7 @@ typedef struct {
   GLint lightDir;     /* same name as field in context_t */
   GLint lightColor;   /* same name as field in context_t */
   GLint gouraudMode;  /* same name as field in context_t */
+  GLint seamFix;
   GLint samplerA;     /* possible name of texture sampler in fragment shader */
   GLint samplerB;     /* possible name of texture sampler in fragment shader */
   GLint samplerC;     /* possible name of texture sampler in fragment shader */
@@ -141,7 +142,8 @@ typedef struct {
     modelMode,            /* 1 when in model mode, 0 otherwise */
     lightMode,            /* 1 when in light mode, 0 otherwise */
     gouraudMode,          /* 1 when in gouraud mode, 0 otherwise */
-    perVertexTexturingMode;
+    perVertexTexturingMode,
+    seamFix;
   TwBar *tbar;            /* pointer to the parameter "tweak bar" */
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   /* (any other information about the state of mouse or keyboard

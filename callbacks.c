@@ -148,6 +148,11 @@ void callbackKeyboard(int key, int action)
 
       // Describe and display scene 2
       case '2':
+        gctx->seamFix = 0;
+        gctx->perVertexTexturingMode = 1;
+        perVertexTexturing();
+        gctx->program=programIds[ID_SIMPLE];
+        setUnilocs();
         updateTweakBarVars(0, 2);
         fprintf(stderr, "Setting scene 2: Demonstrating perspective transform\n");
         //setScene(2);

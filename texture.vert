@@ -5,6 +5,7 @@
 #define PI 3.14159265358979323846264338327
 
 uniform int gouraudMode;
+uniform int seamFix;
 uniform mat4 modelMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 viewMatrix;
@@ -32,7 +33,7 @@ void main() {
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
 
   // set up texture coordinate
-  if (true) { // without seam
+  if (seamFix!=0) { // without seam
     texCoord.x = sin(2 * PI * vertTex2.x + 0.5 * PI); 
     texCoord.z = cos(2 * PI * vertTex2.x + 0.5 * PI);
     texCoord.y = vertTex2.y;
