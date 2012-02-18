@@ -29,6 +29,7 @@ void main() {
   n.y = vnrm.y + b.y;
   n.z = vnrm.z;
 
+  // Phong shading
   vec3 diff = Kd * max(0.0, dot(n, lightDir)) * a.rgb;
   vec3 amb = Ka * a.rgb;
 
