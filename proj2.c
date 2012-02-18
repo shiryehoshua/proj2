@@ -242,7 +242,6 @@ int contextGLInit(context_t *ctx) {
     }
   }
 
-
   //Set to view mode (default)
   ctx->viewMode = 1;
   ctx->modelMode = 0;
@@ -275,6 +274,8 @@ int contextGLInit(context_t *ctx) {
   gctx->mouseFun.f = identity;
   gctx->mouseFun.offset = gctx->mouseFun.multiplier = gctx->mouseFun.i = 0;
 
+  gctx->perVertexTexturingMode=1;
+  perVertexTexturing();
 
   return 0;
 }
