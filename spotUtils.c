@@ -233,8 +233,8 @@ GLint spotProgramNew(const char *vertFileName,
   }
 
   /* shaders no longer needed post-linking */
-  //glDeleteShader(vertId);
-  //glDeleteShader(fragId);
+  glDeleteShader(vertId);
+  glDeleteShader(fragId);
     
   return program;
 }
