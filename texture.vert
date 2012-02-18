@@ -18,6 +18,7 @@ uniform float shexp;
 in vec4 vertPos;
 in vec3 vertRgb;
 in vec3 vertNorm;
+in vec2 vertTex2;
 
 out vec4 fragColor;
 out vec2 texCoord;
@@ -29,7 +30,7 @@ void main() {
   gl_Position = projMatrix * viewMatrix * modelMatrix * vertPos;
 
   // set up texture coordinate
-  texCoord.xy = (2 * modelMatrix * vertPos).xy;
+  texCoord = vertTex2; 
 
   if (gouraudMode != 0) { // in Gouraud mode
     // transform normals
