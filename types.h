@@ -85,6 +85,7 @@ typedef struct {
   GLint Kd;           /* same name as field in spotGeom */
   GLint Ks;           /* same name as field in spotGeom */
   GLint shexp;        /* same name as field in spotGeom */
+  GLint gi;           /* index of spotGeom object */
   /* vvvvvvvvvvvvvvvvvvvvv YOUR CODE HERE vvvvvvvvvvvvvvvvvvvvvvvv */
   GLint viewMatrix;   /* possible name of view matrix in vertex shader */
   GLint projMatrix;   /* possible name of projection matrix in vertex shader */

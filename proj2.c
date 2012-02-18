@@ -211,6 +211,7 @@ int contextGLInit(context_t *ctx) {
   SET_UNILOC(viewMatrix);
   SET_UNILOC(projMatrix);
   SET_UNILOC(objColor);
+  SET_UNILOC(gi);
   SET_UNILOC(Ka);
   SET_UNILOC(Kd);
   SET_UNILOC(Ks);
@@ -245,6 +246,7 @@ int contextGLInit(context_t *ctx) {
   //Set to view mode (default)
   ctx->viewMode = 1;
   ctx->modelMode = 0;
+  ctx->lightMode = 0;
 
   //Model Initializations
   SPOT_M4_IDENTITY(gctx->model.xyzw);
@@ -364,11 +366,9 @@ int contextDraw(context_t *ctx) {
   glBindTexture(GL_TEXTURE_2D, ctx->image[0]->textureId);
   glUniform1i(ctx->uniloc.samplerA, 0);
 
-  /*
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
-  */
 
   norm_M4(gctx->camera.uvn);
 
@@ -392,6 +392,7 @@ int contextDraw(context_t *ctx) {
     glUniform1f(ctx->uniloc.Ka, ctx->geom[gi]->Ka);
     glUniform1f(ctx->uniloc.Kd, ctx->geom[gi]->Kd);
     glUniform1f(ctx->uniloc.Ks, ctx->geom[gi]->Ks);
+    glUniform1i(ctx->uniloc.gi, gi);
     glUniform1f(ctx->uniloc.shexp, ctx->geom[gi]->shexp);
     spotGeomDraw(ctx->geom[gi]);
   }
