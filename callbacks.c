@@ -228,6 +228,7 @@ void callbackMouseButton(int button, int action)
     } else if (xf < FIFTH) {
       gctx->mouseFun.i = VERTICAL;
       if (!gctx->shiftDown) {
+        /*
         printf(" ... (mode V) zooms in or out\n");
         if (gctx->viewMode) {
           gctx->mouseFun.m = &gctx->camera.fov;
@@ -236,6 +237,7 @@ void callbackMouseButton(int button, int action)
           gctx->mouseFun.multiplier = 0.25;
           callbackResize(gctx->winSizeX, gctx->winSizeY);
         }
+        */
       } else {
         printf(" ... (mode V) shrinks or grows (far distance) - (near distance)\n");
         if (gctx->viewMode) {

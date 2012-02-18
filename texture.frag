@@ -35,7 +35,6 @@ void main() {
     default:
       c.rgb = objColor;
   }
-  vec4 textureColor = texture(samplerA, texCoord);
 
   if (gouraudMode != 0) { // in Gouraud mode
     color = fragColor;

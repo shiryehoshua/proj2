@@ -351,6 +351,7 @@ int contextDraw(context_t *ctx) {
   glBindTexture(GL_TEXTURE_2D, ctx->image[1]->textureId);
   glUniform1i(ctx->uniloc.samplerB, 1);
 
+
   norm_M4(gctx->camera.uvn);
 
   glUniformMatrix4fv(ctx->uniloc.viewMatrix, 1, GL_FALSE, gctx->camera.uvn);
@@ -381,12 +382,10 @@ int contextDraw(context_t *ctx) {
   /* These lines are also related to using textures.  We finish by
      leaving GL_TEXTURE0 as the active unit since AntTweakBar uses
      that, but doesn't seem to explicitly select it */
-  /*
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, 0);
-  */
 
   /* You are welcome to do error-checking with higher granularity than
      just once per render, in which case this error checking loop
