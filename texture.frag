@@ -2,6 +2,8 @@
 
 // Sample fragment shader for Project 2.  Hack away!
 
+#define PI_INV 0.31830988618379067153776752674 
+
 uniform int gouraudMode;
 uniform int gi;
 uniform vec3 lightDir;
@@ -15,7 +17,7 @@ uniform float Ks;
 uniform float shexp;
 
 in vec4 fragColor;
-in vec2 texCoord;
+in vec3 texCoord;
 in vec3 vnrm;
 
 out vec4 color;
@@ -23,14 +25,22 @@ out vec4 color;
 void main() {
 
   vec4 c;
+  vec2 tc;
+  if (true) { // without seam
+    tc.x = 0.5 * PI_INV * atan(texCoord.z, texCoord.x) ;
+    tc.y = texCoord.y;
+  }
+  else {
+    tc = texCoord.xy;
+  }
 
   switch (gi)
   {
     case 0:
-      c = texture(samplerA, texCoord);
+      c = texture(samplerA, tc);
       break;
     case 1:
-      c = texture(samplerB, texCoord);
+      c = texture(samplerB, tc);
       break;
     default:
       c.rgb = objColor;
