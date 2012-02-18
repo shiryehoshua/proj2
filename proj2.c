@@ -27,6 +27,16 @@ int programIds[NUM_PROGRAMS+1];       // List of corresponding program ids (for 
 // Global context
 context_t *gctx = NULL;
 
+// Values for tweak bar
+TwType twBumpMappingModes, twFilteringModes;
+TwEnumVal twBumpMappingModesEV[]={{Disabled, "Disabled"},
+                                  {Bump, "Bump"},
+                                  {Parallax, "Parallax"}},
+          twFilteringModesEV[]  ={{Nearest, "Nearest"},
+                                  {Linear, "Linear"},
+                                  {NearestWithMipmap, "NearestWithMipmap"},
+                                  {LinearWithMipmap, "LinearWithMipmap"}};
+
 // NOTE: the following supports per-vertex texturing. We set the RGB values at each vertex, and
 //       our shaders linearly interpolate the values, giving it a (sick) low-res look
 int perVertexTexturing() {
@@ -208,6 +218,8 @@ int contextGLInit(context_t *ctx) {
   fragFnames[ID_TEXTURE]="texture.frag";
   vertFnames[ID_BUMP]="bump.vert";
   fragFnames[ID_BUMP]="bump.frag";
+  vertFnames[ID_PARALLAX]="parallax.vert";
+  fragFnames[ID_PARALLAX]="parallax.frag";
 
   // NOTE: we loop for as many shaders as are in our "stack" (NUM_PROGRAMS), and then once more
   //       to pull in whatever shader was passed in via the terminal (or not, if we have
@@ -444,6 +456,8 @@ int contextDraw(context_t *ctx) {
   return 0;
 }
 
+// NOTE: we use a callback here, since toggling perVertexTexturing requires the loading
+//       of different shaders (and thus updating unilocs)
 static void TW_CALL setPerVertexTexturingCallback(const void *value, void *clientData) {
   gctx->perVertexTexturingMode ^= 1;
   fprintf(stderr, gctx->perVertexTexturingMode ? "Per-vertex Texturing: ON\n" : "Per-vertex Texturing: OFF\n");
@@ -461,17 +475,59 @@ static void TW_CALL getPerVertexTexturingCallback(void *value, void *clientData)
   *((int *) value) = gctx->perVertexTexturingMode;
 }
 
-static void TW_CALL setSeamFixCallback(const void *value, void *clientData) {
-  gctx->seamFix ^= 1;
-  fprintf(stderr, gctx->seamFix ? "Seam Fix: ON\n" : "Seam Fix: OFF\n");
+// NOTE: we use a callback here, since toggling bumpMapping requires the loading
+//       of different shaders (and thus updating unilocs); additionally, we ensure
+//       parallaxMapping is off
+static void TW_CALL setBumpMappingCallback(const void *value, void *clientData) {
+  gctx->bumpMappingMode = *((const enum BumpMappingModes *) value);
+  switch (gctx->bumpMappingMode) {
+    case Bump:
+      printf("\tLoading shader 'bump' with id=%d\n", programIds[ID_BUMP]);
+      gctx->program=programIds[ID_BUMP];
+      break;
+    case Parallax:
+      printf("\tLoading shader 'parallax' with id=%d\n", programIds[ID_PARALLAX]);
+      gctx->program=programIds[ID_PARALLAX];
+      break;
+    default:
+      printf("\tLoading shader 'texture' with id=%d\n", programIds[ID_TEXTURE]);
+      gctx->program=programIds[ID_TEXTURE];
+  }
+  setUnilocs();
 }
 
-static void TW_CALL getSeamFixCallback(void *value, void *clientData) {
-  *((int *) value) = gctx->seamFix;
+static void TW_CALL getBumpMappingCallback(void *value, void *clientData) {
+  *((int *) value) = gctx->bumpMappingMode;
+}
+
+static void TW_CALL setFilteringCallback(const void *value, void *clientData) {
+  gctx->filteringMode = *((const enum FilteringModes *) value);
+  switch (gctx->filteringMode) {
+    case Nearest:
+      printf("\tGL_NEAREST\n");
+      break;
+    case Linear:
+      printf("\tGL_LINEAR\n");
+      break;
+    case NearestWithMipmap:
+      printf("\tGL_NEAREST & GL_NEAREST_MIPMAP_NEAREST\n");
+      break;
+    case LinearWithMipmap:
+      printf("\tGL_LINEAR & GL_LINEAR_MIPMAP_LINEAR\n");
+      break;
+    default:
+      printf("\tDEFAULT\n");
+  }
+  setUnilocs();
+}
+
+static void TW_CALL getFilteringCallback(void *value, void *clientData) {
+  *((int *) value) = gctx->filteringMode;
 }
 
 // NOTE: here are our tweak bar definitions
-int updateTweakBarVars(int EE, int scene) {
+int updateTweakBarVars(int scene) {
+  int EE=0;
   if (!EE) EE |= !TwRemoveAllVars(gctx->tbar);
   if (!EE) EE |= !TwAddVarRW(gctx->tbar, "geom[0]->Ka",
                              TW_TYPE_FLOAT, &(gctx->geom[0]->Ka),
@@ -490,24 +546,35 @@ int updateTweakBarVars(int EE, int scene) {
                              " label='bkgr color' ");
   switch (scene) {
     case 1:
-      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
-                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
-                                 " label='gouraud mode' true=Enabled false=Disabled ");
+      if (!EE) EE |= !TwAddVarRW(
+           gctx->tbar, "gouraudMode",
+           TW_TYPE_BOOL8, &(gctx->gouraudMode),
+           " label='gouraud mode' true=Enabled false=Disabled ");
       break;
     case 2:
-      if (!EE) EE |= !TwAddVarCB(gctx->tbar, "perVertexTexturing",
-                                 TW_TYPE_BOOL8, setPerVertexTexturingCallback,
-                                 getPerVertexTexturingCallback, &(gctx->perVertexTexturingMode),
-                                 " label='per-vertex texturing' true=Enabled false=Disabled ");
-      if (!EE) EE |= !TwAddVarCB(gctx->tbar, "seamFix",
-                                 TW_TYPE_BOOL8, setSeamFixCallback,
-                                 getSeamFixCallback, &(gctx->seamFix),
-                                 " label='seam fix' true=Enabled false=Disabled ");
+      if (!EE) EE |= !TwAddVarCB(
+           gctx->tbar, "perVertexTexturing",
+           TW_TYPE_BOOL8, setPerVertexTexturingCallback,
+           getPerVertexTexturingCallback, &(gctx->perVertexTexturingMode),
+           " label='per-vertex texturing' true=Enabled false=Disabled ");
+      if (!EE) EE |= !TwAddVarRW(
+           gctx->tbar, "seamFix",
+           TW_TYPE_BOOL8, &(gctx->seamFix),
+           " label='seam fix' true=Enabled false=Disabled ");
       break;
     case 3:
-      if (!EE) EE |= !TwAddVarRW(gctx->tbar, "gouraudMode",
-                                 TW_TYPE_BOOL8, &(gctx->gouraudMode),
-                                 " label='gouraud mode' true=Enabled false=Disabled ");
+      if (!EE) EE |= !TwAddVarCB(
+           gctx->tbar, "filteringMode",
+           twFilteringModes, setFilteringCallback,
+           getFilteringCallback, &(gctx->filteringMode),
+           " label='filtering mode' ");
+      break;
+    case 4:
+      if (!EE) EE |= !TwAddVarCB(
+           gctx->tbar, "bumpMappingMode",
+           twBumpMappingModes, setBumpMappingCallback,
+           getBumpMappingCallback, &(gctx->bumpMappingMode),
+           " label='bump mapping' ");
       break;
     default:
       break;
@@ -519,8 +586,13 @@ int createTweakBar(context_t *ctx, int scene) {
   const char me[]="createTweakBar";
   char buff[128];
   int EE;  /* we have an error */
-  
+
   EE = 0;
+
+  // NOTE: these are nice to have
+  twBumpMappingModes=TwDefineEnum("BumpMappingModes", twBumpMappingModesEV, 3);
+  twFilteringModes=TwDefineEnum("FilteringModes", twFilteringModesEV, 4);
+  
   /* Create a tweak bar for interactive parameter adjustment */
   if (!EE) EE |= !(ctx->tbar = TwNewBar(TBAR_NAME));
   /* documentation for the TwDefine parameter strings here:
@@ -545,7 +617,7 @@ int createTweakBar(context_t *ctx, int scene) {
   if (!EE) EE |= !TwDefine(buff);
   
   // NOTE: we broke this section out for easy update of tweak bar vars per-scene
-  EE = updateTweakBarVars(EE, scene);
+  if (!EE) EE |= updateTweakBarVars(scene);
 
   /* see also:
      http://www.antisphere.com/Wiki/tools:anttweakbar:twtype

@@ -19,7 +19,7 @@ extern int perVertexTexturing();
 extern void setUnilocs();
 extern int programIds[NUM_PROGRAMS+1];
 extern const char *vertFnames[NUM_PROGRAMS], *fragFnames[NUM_PROGRAMS];
-extern int updateTweakBarVars(int EE, int scene);
+extern int updateTweakBarVars(int scene);
 
 #include <AntTweakBar.h>
 
@@ -141,7 +141,7 @@ void callbackKeyboard(int key, int action)
 
       // Describe and display scene 1
       case '1':
-        updateTweakBarVars(0, 1);
+        updateTweakBarVars(1);
         fprintf(stderr, "Setting scene 1: Demonstrating model, view and orthographic view transoforms\n");
         //setScene(1);
         break;
@@ -153,16 +153,23 @@ void callbackKeyboard(int key, int action)
         perVertexTexturing();
         gctx->program=programIds[ID_SIMPLE];
         setUnilocs();
-        updateTweakBarVars(0, 2);
+        updateTweakBarVars(2);
         fprintf(stderr, "Setting scene 2: Demonstrating perspective transform\n");
         //setScene(2);
         break;
 
       // Describe and display scene 3
       case '3':
-        updateTweakBarVars(0, 3);
-        fprintf(stderr, "Setting scene 3: Demostrating correct surface normals\n"); 
+        updateTweakBarVars(3);
+        fprintf(stderr, "Setting scene 3: filtering modes\n"); 
         //setScene(3);
+        break;
+
+      case '4':
+        updateTweakBarVars(4);
+        gctx->program=programIds[ID_BUMP];
+        setUnilocs();
+        fprintf(stderr, "Setting scene 4");
         break;
 
       case 'T':
