@@ -1,6 +1,6 @@
 #version 150
 
-// Sample vertex shader for Project 2.  Hack away!
+// Vertex shader for phong/gouraud shading 
 
 uniform int gouraudMode;
 uniform mat4 modelMatrix;
@@ -20,7 +20,6 @@ in vec3 vertRgb;
 in vec3 vertNorm;
 
 out vec4 fragColor;
-out vec2 texCoord;
 out vec3 vnrm;
 
 void main() {

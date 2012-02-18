@@ -21,8 +21,6 @@ in vec3 vertNorm;
 in vec2 vertTex2;
 
 out vec4 fragColor;
-out vec2 texCoord;
-out vec3 vnrm;
 
 void main() {
   // transform vertices 
@@ -34,7 +32,6 @@ void main() {
   // Surface brightest when normal and lightDir are aligned, but this
   // is not Phong lighting, and may not be a good starting point for it.
   float dt = pow((dot(nrm, lightDir)+1.0)/2.0, 4);
-  //fragColor.rgb = vertRgb * objColor.rgb * (Ka + Kd*dt);
   fragColor.rgb = vertRgb * objColor.rgb * (Ka + Kd*dt);
   fragColor.a = 1.0;
 }
